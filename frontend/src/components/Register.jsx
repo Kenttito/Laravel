@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import countries from '../data/countries';
 import currencies from '../data/currencies';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL;
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -30,7 +30,7 @@ const Register = () => {
     }
     
     // Combine country code with phone number
-    const fullPhoneNumber = phoneCountryCode + phone.replace(/^[Ak]/, '');
+    const fullPhoneNumber = phoneCountryCode + phone.replace(/[^\d+]/g, '');
     
     setLoading(true);
     try {
@@ -51,7 +51,20 @@ const Register = () => {
       } else if (err.response?.status === 409) {
         errorMessage = 'An account with this email or phone number already exists.';
       } else if (err.response?.status === 400) {
-        errorMessage = 'Please check your input and try again.';
+        // Check for specific error types from backend
+        if (err.response?.data?.error === 'email_exists') {
+          errorMessage = err.response.data.message;
+        } else if (err.response?.data?.errors) {
+          // Handle validation errors
+          const errors = err.response.data.errors;
+          if (errors.email) {
+            errorMessage = errors.email[0];
+          } else {
+            errorMessage = 'Please check your input and try again.';
+          }
+        } else {
+          errorMessage = 'Please check your input and try again.';
+        }
       }
       
       setError(errorMessage);

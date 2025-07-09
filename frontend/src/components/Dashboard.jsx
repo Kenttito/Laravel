@@ -4,11 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { UserNavbar } from './Navbar';
 import TradingViewChart from './TradingViewChart';
 import ErrorBoundary from './ErrorBoundary';
-import SimpleBTCChart from './SimpleBTCChart';
 import RecentActivity from './RecentActivity';
 import { jwtDecode } from 'jwt-decode';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL;
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 
 // Check if user is being impersonated by admin
 const isImpersonated = () => {
@@ -28,6 +27,7 @@ const getAuthToken = () => localStorage.getItem('impersonationToken') || localSt
 axios.interceptors.response.use(
   response => response,
   error => {
+    console.error('Axios error:', error);
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('impersonationToken');
@@ -38,6 +38,17 @@ axios.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Set default timeout for all axios requests
+axios.defaults.timeout = 10000;
+
+// Utility to format amounts without trailing zeros
+const formatAmount = (amount) => {
+  if (amount === null || amount === undefined) return '';
+  const num = Number(amount);
+  if (isNaN(num)) return amount;
+  return num.toLocaleString(undefined, { maximumFractionDigits: 8 });
+};
 
 const Dashboard = () => {
   const [wallet, setWallet] = useState(null);
@@ -53,7 +64,7 @@ const Dashboard = () => {
   const [error, setError] = useState('');
   const wsRef = useRef(null);
   const navigate = useNavigate();
-  const [marketTrades, setMarketTrades] = useState([]);
+  const [_, setMarketTrades] = useState([]); // marketTrades is not used
   const marketWsRef = useRef(null);
 
   const token = localStorage.getItem('token');
@@ -63,6 +74,12 @@ const Dashboard = () => {
     setError('');
     try {
       const token = getAuthToken();
+      if (!token) {
+        setError('No authentication token found');
+        setLoading(false);
+        return;
+      }
+      
       if (token) {
         try {
           const payload = jwtDecode(token);
@@ -71,26 +88,53 @@ const Dashboard = () => {
           console.warn('Failed to decode token:', e);
         }
       }
+      
       // Fetch wallet data
       const walletRes = await axios.get(`${API_BASE_URL}/api/user/wallet`, {
         headers: { Authorization: `Bearer ${token}` },
+        timeout: 10000, // 10 second timeout
       });
-      // Defensive type check
-      if (walletRes.data && typeof walletRes.data === 'object' && !Array.isArray(walletRes.data)) {
-        setWallet(walletRes.data);
+      
+      // Handle wallet data - it returns {wallets: [...]}
+      if (walletRes.data && walletRes.data.wallets && Array.isArray(walletRes.data.wallets)) {
+        if (walletRes.data.wallets.length > 0) {
+          // Use the first wallet (usually USD fiat wallet)
+          setWallet(walletRes.data.wallets[0]);
+        } else {
+          // No wallets exist, create a default wallet structure
+          setWallet({
+            balance: 0,
+            invested: 0,
+            earnings: 0,
+            totalWithdrawals: 0,
+            currency: 'USD',
+            type: 'fiat'
+          });
+        }
       } else {
-        setWallet(null);
-        setError('Wallet data is not an object.');
+        setWallet({
+          balance: 0,
+          invested: 0,
+          earnings: 0,
+          totalWithdrawals: 0,
+          currency: 'USD',
+          type: 'fiat'
+        });
       }
     } catch (err) {
+      console.error('Error fetching dashboard data:', err);
       if (err.response?.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('impersonationToken');
         localStorage.removeItem('originalAdminToken');
         localStorage.removeItem('impersonatedUser');
         navigate('/login');
+      } else if (err.code === 'ECONNABORTED') {
+        setError('Request timed out. Please try again.');
+      } else if (err.response?.status === 404) {
+        setError('Dashboard endpoint not found.');
       } else {
-        setError('Failed to fetch dashboard data');
+        setError('Failed to fetch dashboard data. Please check your connection.');
       }
     }
     setLoading(false);
@@ -118,40 +162,72 @@ const Dashboard = () => {
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/trader-signals/recent`)
       .then(res => res.json())
-      .then(data => setTraders(data));
+      .then(data => setTraders(data))
+      .catch(err => {
+        console.warn('Failed to fetch trader signals:', err);
+        setTraders([]);
+      });
   }, []);
 
   // Subscribe to WebSocket for real-time updates
   useEffect(() => {
-    wsRef.current = new window.WebSocket('ws://localhost:5001/ws/trader-signals');
-    wsRef.current.onmessage = (event) => {
-      const newSignal = JSON.parse(event.data);
-      setTraders(prev => {
-        const idx = prev.findIndex(t => t.name === newSignal.name);
-        if (idx !== -1) {
-          // Update existing trader
-          const updated = [...prev];
-          updated[idx] = { ...updated[idx], signal: newSignal.signal };
-          return updated;
-        } else {
-          // Add new trader
-          return [...prev, newSignal];
+    try {
+      wsRef.current = new window.WebSocket('ws://localhost:5001/ws/trader-signals');
+      wsRef.current.onmessage = (event) => {
+        try {
+          const newSignal = JSON.parse(event.data);
+          setTraders(prev => {
+            const idx = prev.findIndex(t => t.name === newSignal.name);
+            if (idx !== -1) {
+              // Update existing trader
+              const updated = [...prev];
+              updated[idx] = { ...updated[idx], signal: newSignal.signal };
+              return updated;
+            } else {
+              // Add new trader
+              return [...prev, newSignal];
+            }
+          });
+        } catch (err) {
+          console.warn('Failed to parse WebSocket message:', err);
         }
-      });
-    };
+      };
+      wsRef.current.onerror = (error) => {
+        console.warn('WebSocket error:', error);
+      };
+      wsRef.current.onclose = () => {
+        console.log('WebSocket connection closed');
+      };
+    } catch (err) {
+      console.warn('Failed to connect to WebSocket:', err);
+    }
     return () => wsRef.current && wsRef.current.close();
   }, []);
 
   // Subscribe to Binance live trades WebSocket
   useEffect(() => {
-    marketWsRef.current = new window.WebSocket('ws://localhost:5001/ws/binance-trades');
-    marketWsRef.current.onmessage = (event) => {
-      const trade = JSON.parse(event.data);
-      setMarketTrades(prev => {
-        const updated = [trade, ...prev];
-        return updated.slice(0, 10); // Keep only the 10 most recent trades
-      });
-    };
+    try {
+      marketWsRef.current = new window.WebSocket('ws://localhost:5001/ws/binance-trades');
+      marketWsRef.current.onmessage = (event) => {
+        try {
+          const trade = JSON.parse(event.data);
+          setMarketTrades(prev => {
+            const updated = [trade, ...prev];
+            return updated.slice(0, 10); // Keep only the 10 most recent trades
+          });
+        } catch (err) {
+          console.warn('Failed to parse market WebSocket message:', err);
+        }
+      };
+      marketWsRef.current.onerror = (error) => {
+        console.warn('Market WebSocket error:', error);
+      };
+      marketWsRef.current.onclose = () => {
+        console.log('Market WebSocket connection closed');
+      };
+    } catch (err) {
+      console.warn('Failed to connect to market WebSocket:', err);
+    }
     return () => marketWsRef.current && marketWsRef.current.close();
   }, []);
 
@@ -162,12 +238,21 @@ const Dashboard = () => {
     const fetchDemoAccount = async () => {
       try {
         setDemoLoading(true);
+        setDemoError('');
         const res = await axios.get(`${API_BASE_URL}/api/demo/account`, {
           headers: { Authorization: `Bearer ${token}` },
+          timeout: 10000, // 10 second timeout
         });
         setDemoAccount(res.data);
       } catch (err) {
-        setDemoError('Failed to load demo account');
+        console.error('Error fetching demo account:', err);
+        if (err.code === 'ECONNABORTED') {
+          setDemoError('Request timed out. Please try again.');
+        } else if (err.response?.status === 401) {
+          setDemoError('Authentication failed. Please log in again.');
+        } else {
+          setDemoError('Failed to load demo account. Please check your connection.');
+        }
       } finally {
         setDemoLoading(false);
       }
@@ -520,7 +605,7 @@ const Dashboard = () => {
                 <div className="row mb-3">
                   <div className="col-md-4 mb-3 mb-md-0">
                     <div className="alert alert-info mb-2">
-                      <strong>Demo Balance:</strong> ${demoAccount ? demoAccount.balance.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '...'}<br/>
+                      <strong>Demo Balance:</strong> ${demoAccount ? Math.round(demoAccount.balance).toLocaleString() : '...'}<br/>
                       <strong>Holdings:</strong> {getHolding(selectedAsset)} {selectedAsset.replace('USDT','')}
                     </div>
                     <div className="mb-2">
@@ -546,11 +631,11 @@ const Dashboard = () => {
                     />
                     <div className="d-flex gap-2">
                       <button className="btn btn-success w-50" onClick={() => handleDemoTrade('Buy')} disabled={!assetPrice || demoLoading}>Buy</button>
-                      <button className="btn btn-danger w-50" onClick={() => handleDemoTrade('Sell')} disabled={!assetPrice || demoLoading}>Sell</button>
+                      <button className="btn btn-danger w-50" onClick={() => handleDemoTrade('Sell')} disabled={!assetPrice || demoLoading || getHolding(selectedAsset) <= 0}>Sell</button>
                     </div>
                     <button className="btn btn-secondary w-100 mt-2" onClick={handleDemoReset} disabled={demoLoading}>Reset Demo Account</button>
                     {demoError && <div className="alert alert-danger mt-2 mb-0 py-1">{demoError}</div>}
-                    <div className="mt-2"><strong>Total P&L:</strong> <span className={totalPnL >= 0 ? 'text-success' : 'text-danger'}>{totalPnL >= 0 ? '+' : ''}{totalPnL.toLocaleString(undefined, { maximumFractionDigits: 2 })} USDT</span></div>
+                    <div className="mt-2"><strong>Total P&L:</strong> <span className={totalPnL >= 0 ? 'text-success' : 'text-danger'}>{totalPnL >= 0 ? '+' : ''}{Math.round(totalPnL).toLocaleString()} USDT</span></div>
                   </div>
                   <div className="col-md-8">
                     <h6>Trade History</h6>
@@ -573,9 +658,9 @@ const Dashboard = () => {
                             <tr key={idx}>
                               <td><span className={`badge ${trade.type === 'Buy' ? 'bg-success' : 'bg-danger'}`}>{trade.type}</span></td>
                               <td>{trade.asset.replace('USDT','')}</td>
-                              <td>{trade.amount}</td>
+                              <td>{formatAmount(trade.amount)}</td>
                               <td>${trade.price.toLocaleString()}</td>
-                              <td className={trade.pnl >= 0 ? 'text-success' : 'text-danger'}>{trade.pnl >= 0 ? '+' : ''}{(trade.pnl || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                              <td className={trade.pnl >= 0 ? 'text-success' : 'text-danger'}>{trade.pnl >= 0 ? '+' : ''}{Math.round(trade.pnl || 0).toLocaleString()}</td>
                               <td>{new Date(trade.time).toLocaleString()}</td>
                             </tr>
                           ))}

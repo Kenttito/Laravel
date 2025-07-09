@@ -1,8 +1,7 @@
 import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './i18n'; // Import i18n configuration
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
-import Navbar from './components/Navbar';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import Register from './components/Register';
 import RegistrationSuccess from './components/RegistrationSuccess';
@@ -45,7 +44,7 @@ function AppWrapper() {
 
 function App() {
   return (
-    <BrowserRouter basename="/king-invest">
+    <BrowserRouter>
       <AppWrapper />
     </BrowserRouter>
   );

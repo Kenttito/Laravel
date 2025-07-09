@@ -12,7 +12,7 @@ const CURRENCIES = [
   { label: 'Ripple (XRP)', value: 'XRP', type: 'crypto' },
 ];
 
-const API_BASE_URL = process.env.REACT_APP_API_URL;
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 
 // Utility to get the correct token
 const getAuthToken = () => localStorage.getItem('impersonationToken') || localStorage.getItem('token');
@@ -42,6 +42,8 @@ const Withdrawal = () => {
   const [withdrawMsg, setWithdrawMsg] = useState('');
   const [loading, setLoading] = useState(false);
   const [receiveAddress, setReceiveAddress] = useState('');
+  const [withdrawalMethod, setWithdrawalMethod] = useState('Bank Transfer');
+  const [accountDetails, setAccountDetails] = useState('');
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
@@ -63,13 +65,10 @@ const Withdrawal = () => {
       const withdrawData = { 
         amount: withdrawAmount, 
         currency: withdrawCurrency, 
-        type: withdrawType 
+        type: withdrawType,
+        withdrawalMethod: withdrawalMethod,
+        accountDetails: withdrawType === 'crypto' ? receiveAddress : accountDetails
       };
-      
-      // Add receive address for crypto withdrawals
-      if (withdrawType === 'crypto' && receiveAddress) {
-        withdrawData.receiveAddress = receiveAddress;
-      }
       
       const res = await axios.post(`${API_BASE_URL}/api/transaction/withdraw`, withdrawData, { 
         headers: { Authorization: `Bearer ${token}` } 
@@ -212,27 +211,77 @@ const Withdrawal = () => {
                         style={{ borderRadius: '8px' }}
                     />
                   </div>
+
+                  {withdrawType === 'fiat' && (
+                    <>
+                      <div className="col-md-6">
+                        <label className="form-label fw-bold">Withdrawal Method</label>
+                        <select 
+                          className="form-select" 
+                          value={withdrawalMethod} 
+                          onChange={e => setWithdrawalMethod(e.target.value)}
+                          style={{ borderRadius: '8px' }}
+                        >
+                          <option value="Bank Transfer">Bank Transfer</option>
+                          <option value="PayPal">PayPal</option>
+                          <option value="Skrill">Skrill</option>
+                          <option value="Neteller">Neteller</option>
+                          <option value="Credit Card">Credit Card</option>
+                        </select>
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label fw-bold">Account Details</label>
+                        <input 
+                          type="text" 
+                          className="form-control" 
+                          placeholder="Enter account number, email, or card number" 
+                          value={accountDetails} 
+                          onChange={e => setAccountDetails(e.target.value)} 
+                          required
+                          style={{ borderRadius: '8px' }}
+                        />
+                      </div>
+                    </>
+                  )}
                     
                   {withdrawType === 'crypto' && (
-                      <div className="col-12">
+                    <>
+                      <div className="col-md-6">
+                        <label className="form-label fw-bold">Withdrawal Method</label>
+                        <select 
+                          className="form-select" 
+                          value={withdrawalMethod} 
+                          onChange={e => setWithdrawalMethod(e.target.value)}
+                          style={{ borderRadius: '8px' }}
+                        >
+                          <option value="Bitcoin">Bitcoin</option>
+                          <option value="Ethereum">Ethereum</option>
+                          <option value="USDT">USDT</option>
+                          <option value="Ripple">Ripple</option>
+                        </select>
+                      </div>
+                      <div className="col-md-6">
                         <label className="form-label fw-bold">
                           <i className="fab fa-bitcoin me-2" style={{ color: '#d4af37' }}></i>
                           {getAddressLabel()}
                         </label>
-                      <input 
-                        type="text" 
-                        className="form-control" 
-                        placeholder={getAddressPlaceholder()} 
-                        value={receiveAddress} 
-                        onChange={e => setReceiveAddress(e.target.value)} 
-                        required
+                        <input 
+                          type="text" 
+                          className="form-control" 
+                          placeholder={getAddressPlaceholder()} 
+                          value={receiveAddress} 
+                          onChange={e => setReceiveAddress(e.target.value)} 
+                          required
                           style={{ borderRadius: '8px' }}
-                      />
+                        />
+                      </div>
+                      <div className="col-12">
                         <small className="text-muted">
                           <i className="fas fa-info-circle me-1"></i>
                           Please ensure the address is correct. Incorrect addresses may result in permanent loss of funds.
                         </small>
-                    </div>
+                      </div>
+                    </>
                   )}
                     
                     <div className="col-12">

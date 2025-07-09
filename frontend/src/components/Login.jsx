@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL;
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -59,7 +59,7 @@ const Login = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/auth/2fa/validate`, {
+      const res = await axios.post(`${API_BASE_URL}/auth/2fa/validate`, {
         email: pendingEmail,
         token: twoFACode,
       });

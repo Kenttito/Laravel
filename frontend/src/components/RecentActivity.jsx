@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from './Navbar';
 import { jwtDecode } from 'jwt-decode';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL;
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 
 // Utility to get the correct token
 const getAuthToken = () => localStorage.getItem('impersonationToken') || localStorage.getItem('token');
@@ -13,6 +13,7 @@ const getAuthToken = () => localStorage.getItem('impersonationToken') || localSt
 axios.interceptors.response.use(
   response => response,
   error => {
+    console.error('Axios error:', error);
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('impersonationToken');
@@ -23,6 +24,69 @@ axios.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Set default timeout for all axios requests
+axios.defaults.timeout = 10000;
+
+// Utility to format amounts without trailing zeros
+const formatAmount = (amount) => {
+  if (amount === null || amount === undefined) return '';
+  const num = Number(amount);
+  if (isNaN(num)) return amount;
+  return num.toLocaleString(undefined, { maximumFractionDigits: 8 });
+};
+
+// Utility to format currency with symbol
+const formatCurrency = (amount, currency) => {
+  if (amount === null || amount === undefined) return '';
+  const num = Number(amount);
+  if (isNaN(num)) return amount;
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency || 'USD',
+      maximumFractionDigits: 8
+    }).format(num);
+  } catch {
+    return num.toLocaleString(undefined, { maximumFractionDigits: 8 }) + (currency ? ' ' + currency : '');
+  }
+};
+
+// Utility to format date
+const formatDate = (date) => {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d)) return date;
+  return d.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+};
+
+// Currency label lookup
+const CURRENCY_LABELS = {
+  USD: 'US Dollar (USD)',
+  EUR: 'Euro (EUR)',
+  GBP: 'British Pound (GBP)',
+  BTC: 'Bitcoin (BTC)',
+  ETH: 'Ethereum (ETH)',
+  USDT: 'Tether (USDT)',
+  XRP: 'Ripple (XRP)',
+};
+const getCurrencyLabel = (code) => CURRENCY_LABELS[code] || code;
+
+// Helper to display currency type and code
+const getCurrencyTypeLabel = (tx) => {
+  if (tx.details && tx.details.type && tx.details.currency) {
+    return `${tx.details.type === 'fiat' ? 'Fiat' : 'Crypto'} (${tx.details.currency})`;
+  }
+  // fallback to just code if details missing
+  return tx.currency || '';
+};
 
 const RecentActivity = ({ activity: propActivity, isStandalone = true }) => {
   const [activity, setActivity] = useState([]);
@@ -37,6 +101,12 @@ const RecentActivity = ({ activity: propActivity, isStandalone = true }) => {
     setError('');
     try {
       const token = getAuthToken();
+      if (!token) {
+        setError('No authentication token found');
+        setLoading(false);
+        return;
+      }
+      
       if (token) {
         try {
           const payload = jwtDecode(token);
@@ -45,9 +115,12 @@ const RecentActivity = ({ activity: propActivity, isStandalone = true }) => {
           console.warn('Failed to decode token:', e);
         }
       }
+      
       const res = await axios.get(`${API_BASE_URL}/api/user/activity?limit=${limit}`, {
         headers: { Authorization: `Bearer ${token}` },
+        timeout: 10000, // 10 second timeout
       });
+      
       // Defensive check for both array and object formats
       if (Array.isArray(res.data)) {
         setActivity(res.data);
@@ -61,7 +134,15 @@ const RecentActivity = ({ activity: propActivity, isStandalone = true }) => {
       console.log('First activity item:', res.data.activity ? res.data.activity[0] : res.data[0]);
     } catch (err) {
       console.error('Error fetching activity:', err);
-      setError('Failed to load activity');
+      if (err.code === 'ECONNABORTED') {
+        setError('Request timed out. Please try again.');
+      } else if (err.response?.status === 401) {
+        setError('Authentication failed. Please log in again.');
+      } else if (err.response?.status === 404) {
+        setError('Activity endpoint not found.');
+      } else {
+        setError('Failed to load activity. Please check your connection.');
+      }
     } finally {
       setLoading(false);
     }
@@ -84,7 +165,7 @@ const RecentActivity = ({ activity: propActivity, isStandalone = true }) => {
       const interval = setInterval(() => fetchActivity(), 30000);
       return () => clearInterval(interval);
     }
-  }, [displayLimit]);
+  }, [displayLimit, isStandalone]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -138,10 +219,10 @@ const RecentActivity = ({ activity: propActivity, isStandalone = true }) => {
           ) : displayActivity.map((tx, idx) => (
             <tr key={idx}>
               <td>{tx.type}</td>
-              <td>{tx.amount}</td>
-              <td>{tx.currency}</td>
+              <td>{formatCurrency(tx.amount, tx.currency)}</td>
+              <td>{getCurrencyTypeLabel(tx)}</td>
               <td>{getStatusBadge(tx.status)}</td>
-              <td>{tx.date}</td>
+              <td>{formatDate(tx.created_at)}</td>
             </tr>
           ))}
         </tbody>
@@ -280,14 +361,14 @@ const RecentActivity = ({ activity: propActivity, isStandalone = true }) => {
                         </div>
                       </td>
                       <td>
-                        <span className="fw-bold">{tx.amount}</span>
+                        <span className="fw-bold">{formatCurrency(tx.amount, tx.currency)}</span>
                       </td>
                       <td>
-                        <span className="badge bg-light text-dark">{tx.currency}</span>
+                        <span className="badge bg-light text-dark">{getCurrencyTypeLabel(tx)}</span>
                       </td>
                       <td>{getStatusBadge(tx.status)}</td>
                       <td>
-                        <small className="text-muted">{tx.date}</small>
+                        <small className="text-muted">{formatDate(tx.created_at)}</small>
                       </td>
                     </tr>
                   ))}

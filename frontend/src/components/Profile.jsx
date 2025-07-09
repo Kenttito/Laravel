@@ -6,7 +6,7 @@ import countries from '../data/countries';
 import currencies from '../data/currencies';
 import { jwtDecode } from 'jwt-decode';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL;
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 
 // Utility to get the correct token
 const getAuthToken = () => localStorage.getItem('impersonationToken') || localStorage.getItem('token');
@@ -71,16 +71,17 @@ const Profile = () => {
         const res = await axios.get(`${API_BASE_URL}/api/user/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        // Defensive type check
-        if (res.data && typeof res.data === 'object' && !Array.isArray(res.data)) {
-          setUser(res.data);
+        // Defensive type check - handle both direct user object and wrapped user object
+        const userData = res.data.user || res.data;
+        if (userData && typeof userData === 'object' && !Array.isArray(userData)) {
+          setUser(userData);
           // Initialize form data - convert country code to name for form
           setFormData({
-            firstName: res.data.firstName || '',
-            lastName: res.data.lastName || '',
-            country: getCountryName(res.data.country) || '',
-            currency: res.data.currency || '',
-            phone: res.data.phone || ''
+            firstName: userData.firstName || '',
+            lastName: userData.lastName || '',
+            country: getCountryName(userData.country) || '',
+            currency: userData.currency || '',
+            phone: userData.phone || ''
           });
         } else {
           setUser(null);
@@ -138,7 +139,9 @@ const Profile = () => {
       });
 
       setUpdateMessage('Profile updated successfully!');
-      setUser(res.data.user);
+      // Handle both direct user object and wrapped user object
+      const updatedUser = res.data.user || res.data;
+      setUser(updatedUser);
       
       // Close modal after 2 seconds
       setTimeout(() => {

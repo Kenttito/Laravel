@@ -3,15 +3,24 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL;
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 
 // Utility to get the correct token (impersonation/admin/user)
 const getAuthToken = () => localStorage.getItem('impersonationToken') || localStorage.getItem('token');
 
 // Utility to get admin token for admin operations (never use impersonation token)
-const getAdminToken = () => localStorage.getItem('originalAdminToken') || localStorage.getItem('token');
+const getAdminToken = () => localStorage.getItem('token');
+
+// Utility to format amounts without trailing zeros
+const formatAmount = (amount) => {
+  if (amount === null || amount === undefined) return '';
+  const num = Number(amount);
+  if (isNaN(num)) return amount;
+  return num.toLocaleString(undefined, { maximumFractionDigits: 8 });
+};
 
 const AdminDashboard = () => {
+  console.log('AdminDashboard component rendering');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -74,10 +83,12 @@ const AdminDashboard = () => {
     setPendingWithdrawLoading(true);
     try {
       const token = getAdminToken();
-      const res = await axios.get(`${API_BASE_URL}/api/transaction/withdrawals/pending`, {
+      const res = await axios.get(`${API_BASE_URL}/api/admin/withdrawals`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setPendingWithdrawals(res.data);
+      // Filter for pending withdrawals only
+      const pendingWithdrawals = res.data.filter(withdrawal => withdrawal.status === 'pending');
+      setPendingWithdrawals(pendingWithdrawals);
     } catch (err) {
       setPendingWithdrawals([]);
     }
@@ -85,25 +96,32 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => {
+    console.log('AdminDashboard component mounted');
     // Check admin authentication
     const token = getAdminToken();
+    console.log('Token found:', !!token);
     if (!token) {
+      console.log('No token found, redirecting to admin login');
       navigate('/admin');
       return;
     }
     let payload;
     try {
       payload = JSON.parse(atob(token.split('.')[1]));
+      console.log('Token payload:', payload);
     } catch {
+      console.log('Failed to parse token, redirecting to admin login');
       localStorage.removeItem('token');
       navigate('/admin');
       return;
     }
     if (payload.role !== 'admin') {
+      console.log('User is not admin, redirecting to admin login');
       localStorage.removeItem('token');
       navigate('/admin');
       return;
     }
+    console.log('Admin authentication successful, fetching data');
     // Fetch users
     fetchUsers();
     fetchAllDeposits();
@@ -165,7 +183,7 @@ const AdminDashboard = () => {
     setActionLoading(true);
     try {
       const token = getAdminToken();
-      await axios.put(`${API_BASE_URL}/api/user/${editUser._id}`, form, {
+      await axios.put(`${API_BASE_URL}/api/user/${editUser.id}`, form, {
         headers: { Authorization: `Bearer ${token}` },
       });
       closeEditModal();
@@ -178,6 +196,7 @@ const AdminDashboard = () => {
 
   // Delete
   const openDeleteModal = (userId) => {
+    console.log('Opening delete modal for user ID:', userId);
     setDeleteUserId(userId);
     setShowDeleteModal(true);
   };
@@ -189,6 +208,7 @@ const AdminDashboard = () => {
     setActionLoading(true);
     try {
       console.log('Attempting to delete user:', deleteUserId);
+      console.log('Delete URL:', `${API_BASE_URL}/api/user/${deleteUserId}`);
       const token = getAdminToken();
       const response = await axios.delete(`${API_BASE_URL}/api/user/${deleteUserId}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -198,6 +218,7 @@ const AdminDashboard = () => {
       fetchUsers();
     } catch (err) {
       console.error('Delete error:', err);
+      console.error('Error response:', err.response?.data);
       alert(err.response?.data?.message || 'Failed to delete user');
     }
     setActionLoading(false);
@@ -213,7 +234,7 @@ const AdminDashboard = () => {
     try {
       const token = getAuthToken();
       const res = await axios.post(`${API_BASE_URL}/api/auth/admin/login-as-user`, 
-        { userId: user._id },
+        { userId: user.id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
@@ -237,7 +258,7 @@ const AdminDashboard = () => {
     setAllDepositsLoading(true);
     try {
       const token = getAdminToken();
-      const res = await axios.get(`${API_BASE_URL}/api/transaction/deposits/all`, {
+      const res = await axios.get(`${API_BASE_URL}/api/admin/deposits`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       // Backend now handles sorting with pending deposits first
@@ -294,7 +315,7 @@ const AdminDashboard = () => {
     setActionLoading(true);
     try {
       const token = getAdminToken();
-      await axios.post(`${API_BASE_URL}/api/transaction/deposits/${id}/approve`, {}, {
+      await axios.post(`${API_BASE_URL}/api/admin/deposit/approve/${id}`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchAllDeposits();
@@ -309,7 +330,7 @@ const AdminDashboard = () => {
     setActionLoading(true);
     try {
       const token = getAdminToken();
-      await axios.post(`${API_BASE_URL}/api/transaction/deposits/${id}/decline`, {}, {
+      await axios.post(`${API_BASE_URL}/api/admin/deposit/decline/${id}`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchAllDeposits();
@@ -340,7 +361,7 @@ const AdminDashboard = () => {
     try {
       const token = getAdminToken();
       await axios.post(`${API_BASE_URL}/api/transaction/admin/deposit`, {
-        userId: depositUser._id,
+        userId: depositUser.id,
         amount: depositForm.amount,
         currency: depositForm.currency,
         type: depositForm.type,
@@ -360,9 +381,10 @@ const AdminDashboard = () => {
     setActionLoading(true);
     try {
       const token = getAdminToken();
-      await axios.post(`${API_BASE_URL}/api/transaction/withdrawals/${id}/approve`, {}, {
+      await axios.post(`${API_BASE_URL}/api/admin/withdrawal/approve/${id}`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      alert('Withdrawal approved successfully!');
       fetchPendingWithdrawals();
       fetchUsers(); // Refresh user data in case their balance changed
     } catch (err) {
@@ -375,9 +397,10 @@ const AdminDashboard = () => {
     setActionLoading(true);
     try {
       const token = getAdminToken();
-      await axios.post(`${API_BASE_URL}/api/transaction/withdrawals/${id}/decline`, {}, {
+      await axios.post(`${API_BASE_URL}/api/admin/withdrawal/decline/${id}`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      alert('Withdrawal declined successfully!');
       fetchPendingWithdrawals();
       fetchUsers(); // Refresh user data because their balance will be refunded
     } catch (err) {
@@ -407,7 +430,7 @@ const AdminDashboard = () => {
     try {
       const token = getAdminToken();
       await axios.post(`${API_BASE_URL}/api/transaction/admin/deduct`, {
-        userId: deductUser._id,
+        userId: deductUser.id,
         amount: deductForm.amount,
         currency: deductForm.currency,
         type: deductForm.type,
@@ -513,7 +536,7 @@ const AdminDashboard = () => {
         formData.append('XRP_QR', cryptoFiles.XRP_QR);
       }
       
-      const res = await axios.put(`${API_BASE_URL}/api/admin/crypto-addresses`, formData, {
+      const res = await axios.post(`${API_BASE_URL}/api/admin/crypto-addresses`, formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -662,7 +685,7 @@ const AdminDashboard = () => {
                   </thead>
                   <tbody>
                     {Array.isArray(users) ? users.map(user => (
-                      <tr key={user._id}>
+                                              <tr key={user.id}>
                         <td>{user.email}</td>
                         <td>{user.firstName}</td>
                         <td>{user.lastName}</td>
@@ -675,7 +698,7 @@ const AdminDashboard = () => {
                           <button className="btn btn-danger btn-sm me-2" onClick={() => openDeductModal(user)}>Deduct</button>
                           <button className="btn btn-primary btn-sm me-2" onClick={() => openEditModal(user)}>Edit</button>
                           <button className="btn btn-info btn-sm me-2" onClick={() => handleLoginAsUser(user)}>Login as User</button>
-                          <button className="btn btn-danger btn-sm" onClick={() => openDeleteModal(user._id)}>Delete</button>
+                          <button className="btn btn-danger btn-sm" onClick={() => openDeleteModal(user.id)}>Delete</button>
                         </td>
                       </tr>
                     )) : <tr><td colSpan="8">No users found or users is not an array.</td></tr>}
@@ -761,10 +784,10 @@ const AdminDashboard = () => {
                   </thead>
                   <tbody>
                     {Array.isArray(getPaginatedDeposits()) ? getPaginatedDeposits().map(dep => (
-                      <tr key={dep._id}>
+                                              <tr key={dep.id}>
                         <td>{dep.user?.firstName} {dep.user?.lastName}</td>
                         <td>{dep.user?.email}</td>
-                        <td>{dep.amount}</td>
+                        <td>{formatAmount(dep.amount)}</td>
                         <td>{dep.details?.currency}</td>
                         <td>{dep.details?.type}</td>
                         <td>
@@ -777,8 +800,8 @@ const AdminDashboard = () => {
                         <td>
                           {dep.status === 'pending' && (
                             <>
-                              <button className="btn btn-success btn-sm me-2" onClick={() => handleApproveDeposit(dep._id)} disabled={actionLoading}>Approve</button>
-                              <button className="btn btn-danger btn-sm" onClick={() => handleDeclineDeposit(dep._id)} disabled={actionLoading}>Decline</button>
+                                                      <button className="btn btn-success btn-sm me-2" onClick={() => handleApproveDeposit(dep.id)} disabled={actionLoading}>Approve</button>
+                        <button className="btn btn-danger btn-sm" onClick={() => handleDeclineDeposit(dep.id)} disabled={actionLoading}>Decline</button>
                             </>
                           )}
                           {dep.status !== 'pending' && <span className="text-muted">No actions available</span>}
@@ -829,16 +852,16 @@ const AdminDashboard = () => {
                   </thead>
                   <tbody>
                     {Array.isArray(pendingWithdrawals) ? pendingWithdrawals.map(withdrawal => (
-                      <tr key={withdrawal._id}>
+                                              <tr key={withdrawal.id}>
                         <td>{withdrawal.user?.firstName} {withdrawal.user?.lastName}</td>
                         <td>{withdrawal.user?.email}</td>
-                        <td>{withdrawal.amount}</td>
+                        <td>{formatAmount(withdrawal.amount)}</td>
                         <td>{withdrawal.details?.currency}</td>
                         <td>{withdrawal.details?.type}</td>
                         <td>{new Date(withdrawal.createdAt).toLocaleString()}</td>
                         <td>
-                          <button className="btn btn-success btn-sm me-2" onClick={() => handleApproveWithdrawal(withdrawal._id)} disabled={actionLoading}>Approve</button>
-                          <button className="btn btn-danger btn-sm" onClick={() => handleDeclineWithdrawal(withdrawal._id)} disabled={actionLoading}>Decline</button>
+                                                  <button className="btn btn-success btn-sm me-2" onClick={() => handleApproveWithdrawal(withdrawal.id)} disabled={actionLoading}>Approve</button>
+                        <button className="btn btn-danger btn-sm" onClick={() => handleDeclineWithdrawal(withdrawal.id)} disabled={actionLoading}>Decline</button>
                         </td>
                       </tr>
                     )) : <tr><td colSpan="7">No pending withdrawals found or pendingWithdrawals is not an array.</td></tr>}

@@ -15,7 +15,7 @@ const CURRENCIES = [
   { label: 'Ripple (XRP)', value: 'XRP', type: 'crypto' },
 ];
 
-const API_BASE_URL = process.env.REACT_APP_API_URL;
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 
 // Utility to get the correct token
 const getAuthToken = () => localStorage.getItem('impersonationToken') || localStorage.getItem('token');
@@ -153,18 +153,46 @@ const Deposit = () => {
       const link = document.createElement('a');
       link.download = `${currency}-deposit-qr.png`;
       link.href = cryptoQRImages[`${currency}_QR`];
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       setQrDownloadMsg(`${currency} QR code downloaded!`);
       setTimeout(() => setQrDownloadMsg(''), 3000);
     } else {
-      // Download generated QR code
-      const canvas = document.querySelector(`#qr-${currency} canvas`);
-      if (canvas) {
-        const link = document.createElement('a');
-        link.download = `${currency}-deposit-address.png`;
-        link.href = canvas.toDataURL();
-        link.click();
-        setQrDownloadMsg(`${currency} QR code downloaded!`);
+      // Download generated QR code (SVG -> PNG)
+      const svgElem = document.querySelector(`#qr-${currency} svg`);
+      if (svgElem) {
+        const serializer = new XMLSerializer();
+        const source = serializer.serializeToString(svgElem);
+        const svg64 = btoa(unescape(encodeURIComponent(source)));
+        const image64 = 'data:image/svg+xml;base64,' + svg64;
+        const img = new window.Image();
+        img.onload = function () {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          canvas.toBlob(function(blob) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = `${currency}-deposit-qr.png`;
+            link.href = url;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            setQrDownloadMsg(`${currency} QR code downloaded as PNG!`);
+            setTimeout(() => setQrDownloadMsg(''), 3000);
+          }, 'image/png');
+        };
+        img.onerror = function () {
+          setQrDownloadMsg('Failed to convert QR code to PNG.');
+          setTimeout(() => setQrDownloadMsg(''), 3000);
+        };
+        img.src = image64;
+      } else {
+        setQrDownloadMsg('QR code not found for download.');
         setTimeout(() => setQrDownloadMsg(''), 3000);
       }
     }
