@@ -1,0 +1,9 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "Backend/Dockerfile"
+
+[deploy]
+startCommand = "apache2-foreground"
+healthcheckPath = "/"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure" 
