@@ -1,12 +1,3 @@
-[build]
-builder = "nixpacks"
-
-[deploy]
-startCommand = "php artisan serve --host=0.0.0.0 --port=$PORT"
-healthcheckPath = "/"
-healthcheckTimeout = 300
-restartPolicyType = "on_failure"
-
 [phases.setup]
 nixPkgs = ["php", "composer", "nodejs", "npm"]
 
@@ -22,4 +13,7 @@ cmds = [
     "php artisan config:cache",
     "php artisan route:cache",
     "php artisan view:cache"
-] 
+]
+
+[start]
+cmd = "php artisan serve --host=0.0.0.0 --port=$PORT" 
