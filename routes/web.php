@@ -3,5 +3,9 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return 'OK';
+});
+
+Route::get('/api/health', function () {
+    return response('OK', 200);
 });
