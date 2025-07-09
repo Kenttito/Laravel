@@ -12,21 +12,25 @@
     "bootstrap": "^5.3.7",
     "chart.js": "^4.5.0",
     "gh-pages": "^6.3.0",
-    "i18next": "^25.2.1",
+    "i18next": "^23.7.16",
     "i18next-browser-languagedetector": "^8.2.0",
     "jwt-decode": "^4.0.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.1.0",
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^19.1.0",
-    "react-i18next": "^15.5.3",
+    "react-i18next": "^14.0.5",
     "react-router-dom": "^7.6.2",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
   },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.6.0",
+    "vite": "^7.0.3"
+  },
   "scripts": {
     "dev": "vite",
-    "build": "react-scripts build",
+    "build": "vite build",
     "start": "react-scripts start",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
@@ -51,7 +55,9 @@
       "last 1 safari version"
     ]
   },
-  "devDependencies": {
-    "typescript": "^5.8.3"
+  "overrides": {
+    "ajv": "^8.12.0",
+    "ajv-keywords": "^5.1.0",
+    "fork-ts-checker-webpack-plugin": "^6.5.3"
   }
 }
