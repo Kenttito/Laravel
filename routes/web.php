@@ -7,5 +7,5 @@ Route::get('/', function () {
 });
 
 Route::get('/api/health', function () {
-    return response('OK', 200);
+    return 'OK';
 });
