@@ -1,0 +1,22 @@
+[phases.setup]
+nixPkgs = ["php", "composer", "nodejs", "npm"]
+
+[phases.install]
+cmds = [
+    "cd Backend && composer install --no-dev --optimize-autoloader",
+    "cd Backend && npm install --legacy-peer-deps"
+]
+
+[phases.build]
+cmds = [
+    "cd Backend && npm run build",
+    "cd Backend && php artisan config:cache",
+    "cd Backend && php artisan route:cache",
+    "cd Backend && php artisan view:cache"
+]
+
+[start]
+cmd = "cd Backend && php artisan serve --host=0.0.0.0 --port=$PORT"
+
+[variables]
+NODE_ENV = "production" 
