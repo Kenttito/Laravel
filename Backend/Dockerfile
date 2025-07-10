@@ -57,5 +57,8 @@ RUN chown -R www-data:www-data /var/www/html
 # Expose port 80
 EXPOSE 80
 
+# Ensure Apache listens on all interfaces (debug step)
+RUN echo "Listen 80" >> /etc/apache2/ports.conf
+
 # Start Apache
 CMD ["apache2-foreground"] 
