@@ -60,5 +60,8 @@ EXPOSE 80
 # Ensure Apache listens on all interfaces (debug step)
 RUN echo "Listen 80" >> /etc/apache2/ports.conf
 
+# Increase Apache log level for debugging
+RUN echo "LogLevel debug" >> /etc/apache2/apache2.conf
+
 # Start Apache
 CMD ["apache2-foreground"] 
