@@ -1,0 +1,12 @@
+[phases.setup]
+nixPkgs = ["php", "phpPackages.composer", "nodejs", "npm"]
+
+[phases.build]
+cmds = [
+  "composer install --no-interaction --prefer-dist --optimize-autoloader",
+  "npm install --legacy-peer-deps",
+  "npm run build"
+]
+
+[phases.start]
+cmd = "php -S 0.0.0.0:80 -t public" 
