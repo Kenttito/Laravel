@@ -4,6 +4,6 @@ dockerfilePath = "Dockerfile"
 
 [deploy]
 startCommand = "apache2-foreground"
-healthcheckPath = "/"
+healthcheckPath = "/test.html"
 healthcheckTimeout = 60
 restartPolicyType = "on_failure" 
