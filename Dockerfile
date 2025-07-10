@@ -56,6 +56,8 @@ RUN npm install --legacy-peer-deps
 
 # Copy the rest of the application
 COPY Backend/ .
+# Explicitly copy public directory to ensure .htaccess is present
+COPY Backend/public/ ./public/
 
 # Build assets
 RUN npm run build
