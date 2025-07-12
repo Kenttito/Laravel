@@ -1,0 +1,16 @@
+[phases.setup]
+nixPkgs = ["php", "composer", "mysql"]
+
+[phases.install]
+cmds = ["composer install --ignore-platform-reqs --no-dev --optimize-autoloader"]
+
+[phases.build]
+cmds = [
+  "php artisan config:clear",
+  "php artisan cache:clear", 
+  "php artisan key:generate --force",
+  "php artisan migrate --force"
+]
+
+[start]
+cmd = "php -S 0.0.0.0:$PORT -t public" 
