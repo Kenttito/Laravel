@@ -5,6 +5,4 @@ builder = "dockerfile"
 healthcheckPath = "/ping"
 healthcheckTimeout = 5
 restartPolicyType = "on_failure"
-
-[deploy.startCommand]
-command = "php artisan migrate --force && php-fpm" 
+startCommand = "php artisan migrate --force && php-fpm" 
