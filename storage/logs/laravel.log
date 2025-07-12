@@ -400,3 +400,41 @@
 #41 /Users/scottspark/kings-invest-backend/artisan(16): Illuminate\\Foundation\\Application->handleCommand(Object(Symfony\\Component\\Console\\Input\\ArgvInput))
 #42 {main}
 "} 
+[2025-07-12 22:15:59] production.ERROR: SQLSTATE[HY000] [1049] Unknown database 'laravel' (Connection: mysql, SQL: select * from `users` where `email` = admin@kingsinvest.com limit 1) {"exception":"[object] (Illuminate\\Database\\QueryException(code: 1049): SQLSTATE[HY000] [1049] Unknown database 'laravel' (Connection: mysql, SQL: select * from `users` where `email` = admin@kingsinvest.com limit 1) at /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php:822)
+[stacktrace]
+#0 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(776): Illuminate\\Database\\Connection->runQueryCallback('select * from `...', Array, Object(Closure))
+#1 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(395): Illuminate\\Database\\Connection->run('select * from `...', Array, Object(Closure))
+#2 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3131): Illuminate\\Database\\Connection->select('select * from `...', Array, true)
+#3 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3116): Illuminate\\Database\\Query\\Builder->runSelect()
+#4 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3706): Illuminate\\Database\\Query\\Builder->{closure:Illuminate\\Database\\Query\\Builder::get():3115}()
+#5 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3115): Illuminate\\Database\\Query\\Builder->onceWithColumns(Array, Object(Closure))
+#6 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(872): Illuminate\\Database\\Query\\Builder->get(Array)
+#7 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(854): Illuminate\\Database\\Eloquent\\Builder->getModels(Array)
+#8 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Concerns/BuildsQueries.php(366): Illuminate\\Database\\Eloquent\\Builder->get(Array)
+#9 /Users/scottspark/kings-invest-backend/create_admin.php(13): Illuminate\\Database\\Eloquent\\Builder->first()
+#10 {main}
+
+[previous exception] [object] (PDOException(code: 1049): SQLSTATE[HY000] [1049] Unknown database 'laravel' at /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php:67)
+[stacktrace]
+#0 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php(67): PDO::connect('mysql:host=127....', 'root', Object(SensitiveParameterValue), Array)
+#1 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php(44): Illuminate\\Database\\Connectors\\Connector->createPdoConnection('mysql:host=127....', 'root', Object(SensitiveParameterValue), Array)
+#2 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Connectors/MySqlConnector.php(24): Illuminate\\Database\\Connectors\\Connector->createConnection('mysql:host=127....', Array, Array)
+#3 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Connectors/ConnectionFactory.php(184): Illuminate\\Database\\Connectors\\MySqlConnector->connect(Array)
+#4 [internal function]: Illuminate\\Database\\Connectors\\ConnectionFactory->{closure:Illuminate\\Database\\Connectors\\ConnectionFactory::createPdoResolverWithHosts():179}()
+#5 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(1228): call_user_func(Object(Closure))
+#6 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(1264): Illuminate\\Database\\Connection->getPdo()
+#7 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(509): Illuminate\\Database\\Connection->getReadPdo()
+#8 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(404): Illuminate\\Database\\Connection->getPdoForSelect(true)
+#9 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(809): Illuminate\\Database\\Connection->{closure:Illuminate\\Database\\Connection::select():395}('select * from `...', Array)
+#10 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(776): Illuminate\\Database\\Connection->runQueryCallback('select * from `...', Array, Object(Closure))
+#11 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(395): Illuminate\\Database\\Connection->run('select * from `...', Array, Object(Closure))
+#12 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3131): Illuminate\\Database\\Connection->select('select * from `...', Array, true)
+#13 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3116): Illuminate\\Database\\Query\\Builder->runSelect()
+#14 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3706): Illuminate\\Database\\Query\\Builder->{closure:Illuminate\\Database\\Query\\Builder::get():3115}()
+#15 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3115): Illuminate\\Database\\Query\\Builder->onceWithColumns(Array, Object(Closure))
+#16 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(872): Illuminate\\Database\\Query\\Builder->get(Array)
+#17 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(854): Illuminate\\Database\\Eloquent\\Builder->getModels(Array)
+#18 /Users/scottspark/kings-invest-backend/vendor/laravel/framework/src/Illuminate/Database/Concerns/BuildsQueries.php(366): Illuminate\\Database\\Eloquent\\Builder->get(Array)
+#19 /Users/scottspark/kings-invest-backend/create_admin.php(13): Illuminate\\Database\\Eloquent\\Builder->first()
+#20 {main}
+"} 
