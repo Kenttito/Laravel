@@ -17,7 +17,6 @@ bootstrap/cache/
 kingginvest
 test_api.js
 deploy.sh
-start.sh
 Procfile
 railway.toml
 .nixpacks
