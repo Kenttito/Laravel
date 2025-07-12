@@ -1,0 +1,25 @@
+name: Railway Migration
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Run Migrations
+        run: railway run php artisan migrate --force
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }} 
