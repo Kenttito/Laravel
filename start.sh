@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd "$(dirname "$0")"
+
 echo "Current directory: $(pwd)"
 echo "Listing files:"
 ls -la

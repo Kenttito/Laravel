@@ -8,6 +8,7 @@ cmds = ["composer install --ignore-platform-reqs --no-dev --optimize-autoloader"
 cmds = [
   "ls -la",
   "pwd",
+  "[ -f artisan ] && echo 'artisan found' || (echo 'artisan NOT found' && exit 1)",
   "chmod +x start.sh"
 ]
 
