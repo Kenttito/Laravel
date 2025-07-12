@@ -13,19 +13,27 @@ class ServeCommand extends Command
     public function handle()
     {
         $host = $this->option('host');
-        $portOption = $this->option('port');
         
-        // If port option is empty or contains literal '$PORT', try to get it from environment
-        if (empty($portOption) || $portOption === '$PORT') {
-            $portOption = getenv('PORT') ?: '8000';
+        // Always use environment PORT variable first, fallback to option, then default
+        $envPort = getenv('PORT');
+        $optionPort = $this->option('port');
+        
+        $this->info("Debug: Environment PORT: '" . $envPort . "'");
+        $this->info("Debug: Option PORT: '" . $optionPort . "'");
+        
+        // Priority: ENV PORT > option port > default
+        if (!empty($envPort) && is_numeric($envPort)) {
+            $portOption = $envPort;
+        } elseif (!empty($optionPort) && $optionPort !== '$PORT' && is_numeric($optionPort)) {
+            $portOption = $optionPort;
+        } else {
+            $portOption = '8000';
         }
         
         $port = (int) $portOption; // Force integer conversion
 
         // Debug: Show what port we're using
-        $this->info("Debug: Raw port option: '" . $this->option('port') . "'");
         $this->info("Debug: Converted port: {$port}");
-        $this->info("Debug: Environment PORT: '" . getenv('PORT') . "'");
         
         // Ensure we have a valid port
         if ($port <= 0) {
