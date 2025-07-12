@@ -5,4 +5,4 @@ nixPkgs = ["php83", "composer"]
 cmds = ["composer install --ignore-platform-reqs"]
 
 [start]
-cmd = "php artisan serve --host=0.0.0.0 --port=$PORT" 
+cmd = "php artisan serve:custom --host=0.0.0.0 --port=$PORT" 

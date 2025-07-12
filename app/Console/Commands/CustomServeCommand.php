@@ -31,13 +31,14 @@ class CustomServeCommand extends Command
 
         $this->info("Starting Laravel application on http://{$host}:{$port}");
 
-        // Use PHP's built-in server directly
+        // Use PHP's built-in server directly with router
         $process = new Process([
             'php',
             '-S',
             "{$host}:{$port}",
             '-t',
-            public_path()
+            public_path(),
+            public_path('index.php')
         ]);
 
         $process->setWorkingDirectory(base_path());
