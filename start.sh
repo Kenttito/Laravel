@@ -16,7 +16,6 @@ echo "Running Laravel setup..."
 php artisan config:clear
 php artisan cache:clear
 php artisan key:generate --force
-php artisan migrate --force
 
 echo "Starting PHP server on port $PORT..."
 cd public
