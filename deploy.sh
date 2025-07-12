@@ -19,4 +19,4 @@ php artisan view:clear
 php artisan view:cache
 
 # Start the application
-php artisan serve:custom --host=0.0.0.0 --port=$PORT 
+php artisan serve:fixed --host=0.0.0.0 --port=$PORT 

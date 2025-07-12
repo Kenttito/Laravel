@@ -26,5 +26,5 @@ php artisan cache:clear
 # Generate application key if not set
 php artisan key:generate --force
 
-# Start Laravel using our custom serve command that bypasses the problematic ServeCommand
-exec php artisan serve:custom --host=0.0.0.0 --port=$PORT_INT 
+# Start Laravel using our fixed serve command that properly handles port conversion
+exec php artisan serve:fixed --host=0.0.0.0 --port=$PORT_INT 
