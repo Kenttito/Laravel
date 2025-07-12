@@ -159,6 +159,61 @@ Route::post('/auth/test-register', function (Request $request) {
         'user' => $user
     ], 201);
 });
+
+// Create admin user endpoint (for development only)
+Route::post('/auth/create-admin', function (Request $request) {
+    try {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:6',
+            'firstName' => 'required',
+            'lastName' => 'required',
+            'country' => 'required',
+            'currency' => 'required',
+            'phone' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 400);
+        }
+
+        $data = $validator->validated();
+
+        $user = \App\Models\User::create([
+            'name' => $data['firstName'] . ' ' . $data['lastName'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'firstName' => $data['firstName'],
+            'lastName' => $data['lastName'],
+            'country' => $data['country'],
+            'currency' => $data['currency'],
+            'phone' => $data['phone'],
+            'role' => 'admin',
+            'registrationIP' => $request->ip(),
+            'isActive' => true,
+            'emailConfirmationCode' => null,
+            'emailConfirmationExpires' => null,
+        ]);
+
+        // Create default wallet
+        \App\Models\Wallet::create([
+            'user_id' => $user->id,
+            'currency' => 'USD',
+            'type' => 'fiat',
+            'balance' => 0,
+        ]);
+
+        return response()->json([
+            'message' => 'Admin user created successfully!',
+            'user' => $user
+        ], 201);
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Failed to create admin user',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+});
 // Transaction routes
 Route::middleware('jwt.auth')->post('/transaction/deposit', [\App\Http\Controllers\TransactionController::class, 'deposit']);
 Route::middleware(['jwt.auth', 'admin'])->get('/admin/deposits', [\App\Http\Controllers\TransactionController::class, 'getAllDeposits']);
