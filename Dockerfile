@@ -31,14 +31,14 @@ RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framewor
 RUN chmod -R 775 storage bootstrap/cache
 
 # Install dependencies
-RUN composer install --ignore-platform-reqs --no-dev --optimize-autoloader
+RUN composer clear-cache && rm -rf vendor/ && composer install --ignore-platform-reqs --no-dev
 
 # Create a startup script with debug output and artisan check
 RUN echo '#!/bin/bash\n\
 echo "Current directory: \\$(pwd)"\n\
 echo "Listing /var/www:"\nls -l /var/www\n\
 echo "Listing /var/www/public:"\nls -l /var/www/public\n\
-if [ ! -f /var/www/artisan ]; then\n  echo "ERROR: artisan file not found in /var/www!"\n  exit 1\nfi\n\ncd /var/www\nphp artisan config:clear\nphp artisan cache:clear\nphp artisan key:generate --force\ncd /var/www/public\nphp -S 0.0.0.0:$PORT\n' > /var/www/start.sh && chmod +x /var/www/start.sh
+if [ ! -f /var/www/artisan ]; then\n  echo "ERROR: artisan file not found in /var/www!"\n  exit 1\nfi\n\ncd /var/www\nphp artisan config:clear\nphp artisan cache:clear\nphp artisan key:generate --force\nphp artisan migrate --force\ncd /var/www/public\nphp -S 0.0.0.0:$PORT\n' > /var/www/start.sh && chmod +x /var/www/start.sh
 
 # Expose port
 EXPOSE 8080

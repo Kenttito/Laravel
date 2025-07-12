@@ -4,7 +4,7 @@
     "type": "module",
     "homepage": "https://kenttito.github.io/kings-invest-frontend/",
     "scripts": {
-        "build": "REACT_APP_API_URL=https://laravel-production-2d09.up.railway.app vite build",
+        "build": "vite build",
         "dev": "vite",
         "predeploy": "npm run build",
         "deploy": "gh-pages -d build"

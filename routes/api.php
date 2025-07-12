@@ -98,7 +98,18 @@ Route::get('/test-email', function () {
         });
         return response()->json(['message' => 'Test email sent successfully!']);
     } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
+        return response()->json(['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()], 500);
+    }
+});
+
+// Test verification email route
+Route::get('/test-verification-email', function () {
+    try {
+        $verificationCode = rand(100000, 999999);
+        \Mail::to('test@example.com')->send(new \App\Mail\VerificationEmail($verificationCode, 'Test User'));
+        return response()->json(['message' => 'Verification email sent successfully!', 'code' => $verificationCode]);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()], 500);
     }
 });
 // Test registration endpoint (for development only)

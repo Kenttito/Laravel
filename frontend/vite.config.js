@@ -11,4 +11,7 @@ export default defineConfig({
     build: {
         outDir: 'build',
     },
+    define: {
+        'process.env.REACT_APP_API_URL': JSON.stringify(process.env.VITE_API_URL || 'https://laravel-production-7db4.up.railway.app'),
+    },
 });
