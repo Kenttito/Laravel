@@ -61,14 +61,11 @@ RUN chown -R www-data:www-data storage bootstrap/cache
 # Install dependencies
 RUN composer install --ignore-platform-reqs --no-dev --optimize-autoloader
 
-# Make startup script executable
-RUN chmod +x start.sh
-
 # Change current user to www-data
 USER www-data
 
 # Expose port 8000
 EXPOSE 8000
 
-# Start Laravel using the startup script
-CMD ["./start.sh"] 
+# Start Laravel with inline commands
+CMD php artisan config:clear && php artisan cache:clear && php artisan key:generate --force && php artisan migrate --force && php -S 0.0.0.0:$PORT -t public 
