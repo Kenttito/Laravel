@@ -19,33 +19,34 @@ class AuthController extends Controller
     // Registration endpoint
     public function register(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6',
-            'firstName' => 'required',
-            'lastName' => 'required',
-            'country' => 'required',
-            'currency' => 'required',
-            'phone' => 'required',
-        ], [
-            'email.unique' => 'An account with this email address already exists. Please use a different email or try logging in.',
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email|unique:users,email',
+                'password' => 'required|min:6',
+                'firstName' => 'required',
+                'lastName' => 'required',
+                'country' => 'required',
+                'currency' => 'required',
+                'phone' => 'required',
+            ], [
+                'email.unique' => 'An account with this email address already exists. Please use a different email or try logging in.',
+            ]);
 
-        if ($validator->fails()) {
-            $errors = $validator->errors();
-            
-            // Check if the error is specifically for duplicate email
-            if ($errors->has('email') && $errors->first('email') === 'An account with this email address already exists. Please use a different email or try logging in.') {
-                return response()->json([
-                    'message' => 'An account with this email address already exists. Please use a different email or try logging in.',
-                    'error' => 'email_exists'
-                ], 400);
+            if ($validator->fails()) {
+                $errors = $validator->errors();
+                
+                // Check if the error is specifically for duplicate email
+                if ($errors->has('email') && $errors->first('email') === 'An account with this email address already exists. Please use a different email or try logging in.') {
+                    return response()->json([
+                        'message' => 'An account with this email address already exists. Please use a different email or try logging in.',
+                        'error' => 'email_exists'
+                    ], 400);
+                }
+                
+                return response()->json(['message' => 'Validation failed', 'errors' => $errors], 400);
             }
-            
-            return response()->json(['message' => 'Validation failed', 'errors' => $errors], 400);
-        }
 
-        $data = $validator->validated();
+            $data = $validator->validated();
 
         $user = User::create([
             'name' => $data['firstName'] . ' ' . $data['lastName'],
@@ -64,12 +65,17 @@ class AuthController extends Controller
         ]);
 
         // Create default wallet for the user with USD currency
-        \App\Models\Wallet::create([
-            'user_id' => $user->id,
-            'currency' => 'USD',
-            'type' => 'fiat',
-            'balance' => 0,
-        ]);
+        try {
+            \App\Models\Wallet::create([
+                'user_id' => $user->id,
+                'currency' => 'USD',
+                'type' => 'fiat',
+                'balance' => 0,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to create wallet: ' . $e->getMessage());
+            // Continue without wallet creation for now
+        }
 
         // Send verification email - temporarily disabled for testing
         /*
@@ -85,6 +91,14 @@ class AuthController extends Controller
             'message' => 'Account created successfully! You can now log in.',
             'requiresVerification' => false
         ], 201);
+        } catch (\Exception $e) {
+            \Log::error('Registration error: ' . $e->getMessage());
+            \Log::error('Registration error trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'message' => 'Registration failed. Please try again.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     // Login endpoint
