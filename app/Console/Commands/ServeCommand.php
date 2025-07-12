@@ -13,7 +13,19 @@ class ServeCommand extends Command
     public function handle()
     {
         $host = $this->option('host');
-        $port = (int) $this->option('port'); // Force integer conversion
+        $portOption = $this->option('port');
+        
+        // If port option is empty, try to get it from environment
+        if (empty($portOption)) {
+            $portOption = getenv('PORT') ?: '8000';
+        }
+        
+        $port = (int) $portOption; // Force integer conversion
+
+        // Debug: Show what port we're using
+        $this->info("Debug: Raw port option: " . $this->option('port'));
+        $this->info("Debug: Converted port: {$port}");
+        $this->info("Debug: Environment PORT: " . getenv('PORT'));
 
         $this->info("Starting Laravel development server on http://{$host}:{$port}");
 
@@ -27,7 +39,8 @@ class ServeCommand extends Command
         ]);
 
         $process->setWorkingDirectory(base_path());
-        $process->setTty(true);
+        // Remove TTY mode for Railway deployment
+        // $process->setTty(true);
 
         $process->run(function ($type, $buffer) {
             $this->output->write($buffer);
