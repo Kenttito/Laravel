@@ -23,9 +23,15 @@ class ServeCommand extends Command
         $port = (int) $portOption; // Force integer conversion
 
         // Debug: Show what port we're using
-        $this->info("Debug: Raw port option: " . $this->option('port'));
+        $this->info("Debug: Raw port option: '" . $this->option('port') . "'");
         $this->info("Debug: Converted port: {$port}");
-        $this->info("Debug: Environment PORT: " . getenv('PORT'));
+        $this->info("Debug: Environment PORT: '" . getenv('PORT') . "'");
+        
+        // Ensure we have a valid port
+        if ($port <= 0) {
+            $this->error("Invalid port: {$port}. Using default port 8000.");
+            $port = 8000;
+        }
 
         $this->info("Starting Laravel development server on http://{$host}:{$port}");
 

@@ -27,4 +27,5 @@ php artisan cache:clear
 php artisan key:generate --force
 
 # Start Laravel using our custom serve command that handles port conversion
-exec php artisan serve --host=0.0.0.0 --port=$PORT_INT 
+echo "Starting with PORT_INT: $PORT_INT"
+exec php artisan serve --host=0.0.0.0 --port="$PORT_INT" 
