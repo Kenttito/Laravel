@@ -26,6 +26,10 @@ php artisan cache:clear
 # Generate application key if not set
 php artisan key:generate --force
 
+# Run migrations
+echo "Running database migrations..."
+php artisan migrate --force
+
 # Start Laravel using our custom serve command that handles port conversion
 echo "Starting with PORT_INT: $PORT_INT"
 exec php artisan serve --host=0.0.0.0 --port="$PORT_INT" 
