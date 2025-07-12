@@ -26,8 +26,32 @@ WORKDIR /var/www
 # Copy existing application directory contents
 COPY . /var/www
 
-# Ensure .env exists
-RUN if [ ! -f .env ]; then cp .env.example .env; fi
+# Ensure .env exists (create basic one if .env.example doesn't exist)
+RUN if [ ! -f .env ]; then \
+        if [ -f .env.example ]; then \
+            cp .env.example .env; \
+        else \
+            echo "APP_NAME=Laravel" > .env && \
+            echo "APP_ENV=production" >> .env && \
+            echo "APP_KEY=base64:$(openssl rand -base64 32)" >> .env && \
+            echo "APP_DEBUG=false" >> .env && \
+            echo "APP_URL=https://your-app-url.railway.app" >> .env && \
+            echo "LOG_CHANNEL=stack" >> .env && \
+            echo "LOG_LEVEL=debug" >> .env && \
+            echo "DB_CONNECTION=mysql" >> .env && \
+            echo "DB_HOST=mysql.railway.internal" >> .env && \
+            echo "DB_PORT=3306" >> .env && \
+            echo "DB_DATABASE=railway" >> .env && \
+            echo "DB_USERNAME=root" >> .env && \
+            echo "DB_PASSWORD=" >> .env && \
+            echo "BROADCAST_DRIVER=log" >> .env && \
+            echo "CACHE_DRIVER=file" >> .env && \
+            echo "FILESYSTEM_DISK=local" >> .env && \
+            echo "QUEUE_CONNECTION=sync" >> .env && \
+            echo "SESSION_DRIVER=file" >> .env && \
+            echo "SESSION_LIFETIME=120" >> .env; \
+        fi; \
+    fi
 
 # Ensure storage and cache directories exist and are writable
 RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
