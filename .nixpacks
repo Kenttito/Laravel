@@ -1,14 +1,8 @@
 [phases.setup]
-nixPkgs = ["php83", "composer", "nodejs_18", "npm-9_x"]
+nixPkgs = ["php83", "composer"]
 
 [phases.install]
 cmds = ["composer install --ignore-platform-reqs"]
 
-[phases.build]
-cmds = ["php artisan config:cache"]
-
 [start]
-cmd = "php artisan serve --host=0.0.0.0 --port=$PORT"
-
-[variables]
-PHP_VERSION = "8.3" 
+cmd = "php artisan serve --host=0.0.0.0 --port=$PORT" 
