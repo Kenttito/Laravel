@@ -15,8 +15,8 @@ class ServeCommand extends Command
         $host = $this->option('host');
         $portOption = $this->option('port');
         
-        // If port option is empty, try to get it from environment
-        if (empty($portOption)) {
+        // If port option is empty or contains literal '$PORT', try to get it from environment
+        if (empty($portOption) || $portOption === '$PORT') {
             $portOption = getenv('PORT') ?: '8000';
         }
         
@@ -47,6 +47,9 @@ class ServeCommand extends Command
         $process->setWorkingDirectory(base_path());
         // Remove TTY mode for Railway deployment
         // $process->setTty(true);
+        
+        // Set timeout to null (no timeout) for Railway deployment
+        $process->setTimeout(null);
 
         $process->run(function ($type, $buffer) {
             $this->output->write($buffer);
