@@ -19,6 +19,9 @@ fi
 
 echo "Starting Laravel on port: $PORT_INT"
 
+# Change to the project root directory where artisan is located
+cd /var/www
+
 # Clear any cached configurations
 php artisan config:clear
 php artisan cache:clear
@@ -30,6 +33,9 @@ php artisan key:generate --force
 echo "Running database migrations..."
 php artisan migrate --force
 
-# Start Laravel using our custom serve command that handles port conversion
+# Change back to public directory for serving
+cd /var/www/public
+
+# Start PHP's built-in server serving from public directory
 echo "Starting with PORT_INT: $PORT_INT"
-exec php artisan serve --host=0.0.0.0 --port="$PORT_INT" 
+exec php -S 0.0.0.0:$PORT_INT 
