@@ -43,13 +43,30 @@ class ServeCommand extends Command
 
         $this->info("Starting Laravel development server on http://{$host}:{$port}");
 
+        // Create a router file for proper Laravel handling
+        $routerContent = '<?php
+$uri = urldecode(parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH));
+
+// This file allows us to emulate Apache\'s "mod_rewrite" functionality from the
+// built-in PHP web server. This provides a convenient way to test a Laravel
+// application without having installed a "real" web server software here.
+if ($uri !== "/" && file_exists(__DIR__."/public".$uri)) {
+    return false;
+}
+
+require_once __DIR__."/public/index.php";
+';
+        
+        $routerPath = storage_path('router.php');
+        file_put_contents($routerPath, $routerContent);
+
         $process = new Process([
             'php',
             '-S',
             "{$host}:{$port}",
             '-t',
             public_path(),
-            public_path('index.php')
+            $routerPath
         ]);
 
         $process->setWorkingDirectory(base_path());
@@ -58,6 +75,13 @@ class ServeCommand extends Command
         
         // Set timeout to null (no timeout) for Railway deployment
         $process->setTimeout(null);
+        
+        // Set environment variables for Railway
+        $process->setEnv([
+            'APP_ENV' => getenv('APP_ENV') ?: 'production',
+            'APP_DEBUG' => getenv('APP_DEBUG') ?: 'false',
+            'PORT' => $port
+        ]);
 
         $process->run(function ($type, $buffer) {
             $this->output->write($buffer);
