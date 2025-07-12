@@ -214,6 +214,34 @@ Route::post('/auth/create-admin', function (Request $request) {
         ], 500);
     }
 });
+
+// Update user role endpoint (for development only)
+Route::post('/auth/update-role', function (Request $request) {
+    try {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users,email',
+            'role' => 'required|in:user,admin',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 400);
+        }
+
+        $user = \App\Models\User::where('email', $request->email)->first();
+        $user->role = $request->role;
+        $user->save();
+
+        return response()->json([
+            'message' => 'User role updated successfully!',
+            'user' => $user
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Failed to update user role',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+});
 // Transaction routes
 Route::middleware('jwt.auth')->post('/transaction/deposit', [\App\Http\Controllers\TransactionController::class, 'deposit']);
 Route::middleware(['jwt.auth', 'admin'])->get('/admin/deposits', [\App\Http\Controllers\TransactionController::class, 'getAllDeposits']);
