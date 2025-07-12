@@ -26,12 +26,12 @@ WORKDIR /var/www
 # Copy existing application directory contents
 COPY . /var/www
 
-# Install dependencies
-RUN composer install --ignore-platform-reqs --no-dev --optimize-autoloader
-
 # Ensure storage and cache directories exist and are writable
 RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
 RUN chmod -R 775 storage bootstrap/cache
+
+# Install dependencies
+RUN composer install --ignore-platform-reqs --no-dev --optimize-autoloader
 
 # Create a startup script with debug output and artisan check
 RUN echo '#!/bin/bash\n\
