@@ -54,8 +54,9 @@ RUN if [ ! -f .env ]; then \
     fi
 
 # Ensure storage and cache directories exist and are writable
-RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
+RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
 RUN chmod -R 775 storage bootstrap/cache
+RUN chown -R www-data:www-data storage bootstrap/cache
 
 # Install dependencies
 RUN composer install --ignore-platform-reqs --no-dev --optimize-autoloader
