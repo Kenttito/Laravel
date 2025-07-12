@@ -103,30 +103,45 @@ class AuthController extends Controller
     // Login endpoint
     public function login(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email',
+                'password' => 'required',
+            ]);
 
-        if ($validator->fails()) {
-            return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 400);
+            if ($validator->fails()) {
+                return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 400);
+            }
+
+            $credentials = $request->only('email', 'password');
+            
+            // Check if user exists first
+            $user = User::where('email', $credentials['email'])->first();
+            if (!$user) {
+                return response()->json(['message' => 'Invalid credentials'], 401);
+            }
+
+            if (!$token = JWTAuth::attempt($credentials)) {
+                return response()->json(['message' => 'Invalid credentials'], 401);
+            }
+
+            if (!$user->isActive) {
+                return response()->json(['message' => 'Please verify your email before logging in.'], 403);
+            }
+
+            return response()->json([
+                'message' => 'Login successful',
+                'token' => $token,
+                'user' => $user
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Login error: ' . $e->getMessage());
+            \Log::error('Login error trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'message' => 'Login failed. Please try again.',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $credentials = $request->only('email', 'password');
-        if (!$token = JWTAuth::attempt($credentials)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
-        }
-
-        $user = auth()->user();
-        if (!$user->isActive) {
-            return response()->json(['message' => 'Please verify your email before logging in.'], 403);
-        }
-
-        return response()->json([
-            'message' => 'Login successful',
-            'token' => $token,
-            'user' => $user
-        ]);
     }
 
     // Email verification endpoint
