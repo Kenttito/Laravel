@@ -19,4 +19,4 @@ storage/framework/views/
 bootstrap/cache/
 deploy.sh
 start.sh
-Procfile 
+Procfile .nixpacks

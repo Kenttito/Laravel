@@ -1,8 +1,0 @@
-[phases.setup]
-nixPkgs = ["php83", "composer"]
-
-[phases.install]
-cmds = ["composer install --ignore-platform-reqs"]
-
-[start]
-cmd = "./start.sh" 
