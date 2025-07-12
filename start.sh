@@ -1,10 +1,14 @@
 #!/bin/bash
 
-# Get the port from environment variable, default to 8000
-PORT=${PORT:-8000}
+# Set default port if not provided
+export PORT=${PORT:-8000}
 
-# Convert to integer to avoid type issues
-PORT_INT=$(($PORT))
+# Clear any cached configurations
+php artisan config:clear
+php artisan cache:clear
 
-# Start Laravel
-php artisan serve --host=0.0.0.0 --port=$PORT_INT 
+# Generate application key if not set
+php artisan key:generate --force
+
+# Start Laravel with explicit port handling
+exec php artisan serve --host=0.0.0.0 --port=$PORT 
