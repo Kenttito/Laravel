@@ -58,7 +58,7 @@ class AuthController extends Controller
             'phone' => $data['phone'],
             'role' => $request->input('role', 'user'),
             'registrationIP' => $request->ip(),
-            'isActive' => false,
+            'isActive' => true, // Temporarily set to true to bypass email verification
             'emailConfirmationCode' => rand(100000, 999999),
             'emailConfirmationExpires' => Carbon::now()->addDay(),
         ]);
@@ -71,17 +71,19 @@ class AuthController extends Controller
             'balance' => 0,
         ]);
 
-        // Send verification email
+        // Send verification email - temporarily disabled for testing
+        /*
         try {
             Mail::to($user->email)->send(new VerificationEmail($user->emailConfirmationCode, $user->firstName));
         } catch (\Exception $e) {
             // Log the error but don't fail registration
             \Log::error('Failed to send verification email: ' . $e->getMessage());
         }
+        */
 
         return response()->json([
-            'message' => 'Account created successfully! Please check your email to verify your account.',
-            'requiresVerification' => true
+            'message' => 'Account created successfully! You can now log in.',
+            'requiresVerification' => false
         ], 201);
     }
 
