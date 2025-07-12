@@ -26,13 +26,17 @@ WORKDIR /var/www
 # Copy existing application directory contents
 COPY . /var/www
 
-# Copy existing application directory permissions
-COPY --chown=www-data:www-data . /var/www
+# Ensure .env exists
+RUN if [ ! -f .env ]; then cp .env.example .env; fi
+
+# Ensure storage and cache directories exist and are writable
+RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
+RUN chmod -R 775 storage bootstrap/cache
 
 # Install dependencies
 RUN composer install --ignore-platform-reqs --no-dev --optimize-autoloader
 
-# Change current user to www
+# Change current user to www-data
 USER www-data
 
 # Expose port 8000
