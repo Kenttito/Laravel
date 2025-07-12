@@ -1,4 +1,4 @@
-FROM php:8.3-fpm
+FROM php:8.3-cli
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -26,46 +26,30 @@ WORKDIR /var/www
 # Copy existing application directory contents
 COPY . /var/www
 
-# Ensure .env exists (create basic one if .env.example doesn't exist)
-RUN if [ ! -f .env ]; then \
-        if [ -f .env.example ]; then \
-            cp .env.example .env; \
-        else \
-            echo "APP_NAME=Laravel" > .env && \
-            echo "APP_ENV=production" >> .env && \
-            echo "APP_KEY=base64:$(openssl rand -base64 32)" >> .env && \
-            echo "APP_DEBUG=false" >> .env && \
-            echo "APP_URL=https://your-app-url.railway.app" >> .env && \
-            echo "LOG_CHANNEL=stack" >> .env && \
-            echo "LOG_LEVEL=debug" >> .env && \
-            echo "DB_CONNECTION=mysql" >> .env && \
-            echo "DB_HOST=mysql.railway.internal" >> .env && \
-            echo "DB_PORT=3306" >> .env && \
-            echo "DB_DATABASE=railway" >> .env && \
-            echo "DB_USERNAME=root" >> .env && \
-            echo "DB_PASSWORD=" >> .env && \
-            echo "BROADCAST_DRIVER=log" >> .env && \
-            echo "CACHE_DRIVER=file" >> .env && \
-            echo "FILESYSTEM_DISK=local" >> .env && \
-            echo "QUEUE_CONNECTION=sync" >> .env && \
-            echo "SESSION_DRIVER=file" >> .env && \
-            echo "SESSION_LIFETIME=120" >> .env; \
-        fi; \
-    fi
+# Install dependencies
+RUN composer install --ignore-platform-reqs --no-dev --optimize-autoloader
 
 # Ensure storage and cache directories exist and are writable
 RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
 RUN chmod -R 775 storage bootstrap/cache
-RUN chown -R www-data:www-data storage bootstrap/cache
 
-# Install dependencies
-RUN composer install --ignore-platform-reqs --no-dev --optimize-autoloader
+# Create a startup script that will definitely work
+RUN echo '#!/bin/bash\n\
+echo "Starting Laravel setup..."\n\
+cd /var/www\n\
+echo "Running artisan commands..."\n\
+php artisan config:clear\n\
+php artisan cache:clear\n\
+php artisan key:generate --force\n\
+echo "Running migrations..."\n\
+php artisan migrate --force\n\
+echo "Starting PHP server on port $PORT..."\n\
+cd /var/www/public\n\
+php -S 0.0.0.0:$PORT\n\
+' > /var/www/start.sh && chmod +x /var/www/start.sh
 
-# Change current user to www-data
-USER www-data
+# Expose port
+EXPOSE 8080
 
-# Expose port 8000
-EXPOSE 8000
-
-# Start Laravel with inline commands
-CMD php artisan config:clear && php artisan cache:clear && php artisan key:generate --force && php artisan migrate --force && php -S 0.0.0.0:$PORT -t public 
+# Start the application
+CMD ["/var/www/start.sh"] 
