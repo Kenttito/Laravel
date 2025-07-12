@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["php", "composer", "nodejs", "npm"]
+nixPkgs = ["php83", "composer", "nodejs_18", "npm-9_x"]
 
 [phases.install]
 cmds = ["composer install --ignore-platform-reqs"]

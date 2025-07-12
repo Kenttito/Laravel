@@ -7,5 +7,13 @@ README.md
 kingginvest
 test_api.js
 src/
-storage/
-*.log 
+*.log
+.env
+.env.example
+.env.local
+.env.production
+storage/logs/
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
+bootstrap/cache/ 
