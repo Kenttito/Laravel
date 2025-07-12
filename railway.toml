@@ -1,9 +1,8 @@
 [build]
-builder = "dockerfile"
-dockerfilePath = "Dockerfile"
+builder = "nixpacks"
 
 [deploy]
-startCommand = "apache2-foreground"
-healthcheckPath = "/test.html"
-healthcheckTimeout = 60
+startCommand = "php artisan serve --host=0.0.0.0 --port=$PORT"
+healthcheckPath = "/ping"
+healthcheckTimeout = 5
 restartPolicyType = "on_failure" 

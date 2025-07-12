@@ -2,4 +2,10 @@ frontend/
 node_modules/
 .git/
 .gitignore
-README.md 
+README.md
+.DS_Store
+kingginvest
+test_api.js
+src/
+storage/
+*.log 
