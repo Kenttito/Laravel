@@ -270,3 +270,11 @@ Route::middleware(['jwt.auth', 'admin'])->post('/admin/crypto-addresses', [\App\
 
 // Add clear deposits route
 Route::middleware(['jwt.auth', 'admin'])->delete('/transaction/deposits/clear', [\App\Http\Controllers\TransactionController::class, 'clearAllDeposits']);
+
+// Test JWT middleware
+Route::middleware('jwt.auth')->get('/test-jwt', function () {
+    return response()->json([
+        'message' => 'JWT middleware working!',
+        'user' => auth()->user()
+    ]);
+});
