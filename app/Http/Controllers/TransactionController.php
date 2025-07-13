@@ -12,44 +12,52 @@ class TransactionController extends Controller
     // User deposit request
     public function deposit(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'amount' => 'required|numeric|min:0.01',
-            'currency' => 'required|string',
-            'type' => 'required|string|in:fiat,crypto',
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'amount' => 'required|numeric|min:0.01',
+                'currency' => 'required|string',
+                'type' => 'required|string|in:fiat,crypto',
+            ]);
 
-        if ($validator->fails()) {
-            return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 400);
-        }
-
-        $user = auth()->user();
-        
-        // For testing without JWT middleware
-        if (!$user) {
-            // Use admin user ID for testing
-            $user = \App\Models\User::where('email', 'admin@kingsinvest.com')->first();
-            if (!$user) {
-                return response()->json(['message' => 'No authenticated user found'], 401);
+            if ($validator->fails()) {
+                return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 400);
             }
-        }
-        
-        // Create deposit transaction
-        $transaction = Transaction::create([
-            'user_id' => $user->id,
-            'type' => 'deposit',
-            'amount' => $request->amount,
-            'status' => 'pending',
-            'details' => [
-                'currency' => $request->currency,
-                'type' => $request->type,
-                'description' => "Deposit of {$request->amount} {$request->currency}",
-            ],
-        ]);
 
-        return response()->json([
-            'message' => 'Deposit request submitted successfully. Please wait for admin approval.',
-            'transaction' => $transaction
-        ], 201);
+            $user = auth()->user();
+            
+            // For testing without JWT middleware
+            if (!$user) {
+                // Use admin user ID for testing
+                $user = \App\Models\User::where('email', 'admin@kingsinvest.com')->first();
+                if (!$user) {
+                    return response()->json(['message' => 'No authenticated user found'], 401);
+                }
+            }
+            
+            // Create deposit transaction
+            $transaction = Transaction::create([
+                'user_id' => $user->id,
+                'type' => 'deposit',
+                'amount' => $request->amount,
+                'status' => 'pending',
+                'details' => [
+                    'currency' => $request->currency,
+                    'type' => $request->type,
+                    'description' => "Deposit of {$request->amount} {$request->currency}",
+                ],
+            ]);
+
+            return response()->json([
+                'message' => 'Deposit request submitted successfully. Please wait for admin approval.',
+                'transaction' => $transaction
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Deposit failed',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], 500);
+        }
     }
 
     // Admin: Get all deposits
