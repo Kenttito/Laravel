@@ -114,50 +114,58 @@ Route::get('/test-verification-email', function () {
 });
 // Test registration endpoint (for development only)
 Route::post('/auth/test-register', function (Request $request) {
-    $validator = Validator::make($request->all(), [
-        'email' => 'required|email|unique:users,email',
-        'password' => 'required|min:6',
-        'firstName' => 'required',
-        'lastName' => 'required',
-        'country' => 'required',
-        'currency' => 'required',
-        'phone' => 'required',
-    ]);
+    try {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:6',
+            'firstName' => 'required',
+            'lastName' => 'required',
+            'country' => 'required',
+            'currency' => 'required',
+            'phone' => 'required',
+        ]);
 
-    if ($validator->fails()) {
-        return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 400);
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 400);
+        }
+
+        $data = $validator->validated();
+
+        $user = \App\Models\User::create([
+            'name' => $data['firstName'] . ' ' . $data['lastName'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'firstName' => $data['firstName'],
+            'lastName' => $data['lastName'],
+            'country' => $data['country'],
+            'currency' => $data['currency'],
+            'phone' => $data['phone'],
+            'role' => 'user',
+            'registrationIP' => $request->ip(),
+            'isActive' => true, // Skip email verification for testing
+            'emailConfirmationCode' => null,
+            'emailConfirmationExpires' => null,
+        ]);
+
+        // Create default wallet
+        \App\Models\Wallet::create([
+            'user_id' => $user->id,
+            'currency' => 'USD',
+            'type' => 'fiat',
+            'balance' => 0,
+        ]);
+
+        return response()->json([
+            'message' => 'Account created successfully!',
+            'user' => $user
+        ], 201);
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Failed to create user',
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500);
     }
-
-    $data = $validator->validated();
-
-    $user = \App\Models\User::create([
-        'name' => $data['firstName'] . ' ' . $data['lastName'],
-        'email' => $data['email'],
-        'password' => Hash::make($data['password']),
-        'firstName' => $data['firstName'],
-        'lastName' => $data['lastName'],
-        'country' => $data['country'],
-        'currency' => $data['currency'],
-        'phone' => $data['phone'],
-        'role' => 'user',
-        'registrationIP' => $request->ip(),
-        'isActive' => true, // Skip email verification for testing
-        'emailConfirmationCode' => null,
-        'emailConfirmationExpires' => null,
-    ]);
-
-    // Create default wallet
-    \App\Models\Wallet::create([
-        'user_id' => $user->id,
-        'currency' => 'USD',
-        'type' => 'fiat',
-        'balance' => 0,
-    ]);
-
-    return response()->json([
-        'message' => 'Account created successfully!',
-        'user' => $user
-    ], 201);
 });
 
 // Create admin user endpoint (for development only)
