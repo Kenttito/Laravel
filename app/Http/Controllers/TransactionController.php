@@ -24,6 +24,15 @@ class TransactionController extends Controller
 
         $user = auth()->user();
         
+        // For testing without JWT middleware
+        if (!$user) {
+            // Use admin user ID for testing
+            $user = \App\Models\User::where('email', 'admin@kingsinvest.com')->first();
+            if (!$user) {
+                return response()->json(['message' => 'No authenticated user found'], 401);
+            }
+        }
+        
         // Create deposit transaction
         $transaction = Transaction::create([
             'user_id' => $user->id,

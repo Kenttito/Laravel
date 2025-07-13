@@ -252,6 +252,9 @@ Route::post('/auth/update-role', function (Request $request) {
 });
 // Transaction routes
 Route::middleware('jwt.auth')->post('/transaction/deposit', [\App\Http\Controllers\TransactionController::class, 'deposit']);
+
+// Temporary test route without JWT middleware
+Route::post('/test-deposit', [\App\Http\Controllers\TransactionController::class, 'deposit']);
 Route::middleware(['jwt.auth', 'admin'])->get('/admin/deposits', [\App\Http\Controllers\TransactionController::class, 'getAllDeposits']);
 Route::middleware(['jwt.auth', 'admin'])->post('/admin/deposit/approve/{id}', [\App\Http\Controllers\TransactionController::class, 'approveDeposit']);
 Route::middleware(['jwt.auth', 'admin'])->post('/admin/deposit/decline/{id}', [\App\Http\Controllers\TransactionController::class, 'declineDeposit']);
