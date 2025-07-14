@@ -86,16 +86,24 @@ class AdminController extends Controller
     // Admin: Get global crypto addresses
     public function getCryptoAddresses()
     {
-        // Temporarily bypass authentication for testing
-        // TODO: Re-enable authentication when JWT middleware is fixed
-        
-        $currencies = ['BTC', 'ETH', 'USDT', 'XRP'];
-        $addresses = [];
-        foreach ($currencies as $currency) {
-            $row = CryptoAddress::where('currency', $currency)->whereNull('user_id')->first();
-            $addresses[$currency] = $row ? $row->address : '';
+        try {
+            // Temporarily bypass authentication for testing
+            // TODO: Re-enable authentication when JWT middleware is fixed
+            
+            $currencies = ['BTC', 'ETH', 'USDT', 'XRP'];
+            $addresses = [];
+            foreach ($currencies as $currency) {
+                $row = CryptoAddress::where('currency', $currency)->whereNull('user_id')->first();
+                $addresses[$currency] = $row ? $row->address : '';
+            }
+            return response()->json($addresses);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to get crypto addresses',
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], 500);
         }
-        return response()->json($addresses);
     }
 
     // Admin: Update global crypto addresses
