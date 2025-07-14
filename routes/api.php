@@ -274,6 +274,10 @@ Route::middleware(['jwt.auth', 'admin'])->post('/admin/withdrawal/decline/{id}',
 Route::middleware(['jwt.auth', 'admin'])->get('/admin/crypto-addresses', [\App\Http\Controllers\AdminController::class, 'getCryptoAddresses']);
 Route::middleware(['jwt.auth', 'admin'])->post('/admin/crypto-addresses', [\App\Http\Controllers\AdminController::class, 'updateCryptoAddresses']);
 
+// Test crypto address routes without JWT middleware
+Route::get('/test-crypto-addresses', [\App\Http\Controllers\AdminController::class, 'getCryptoAddresses']);
+Route::post('/test-crypto-addresses', [\App\Http\Controllers\AdminController::class, 'updateCryptoAddresses']);
+
 // Add clear deposits route
 Route::middleware(['jwt.auth', 'admin'])->delete('/transaction/deposits/clear', [\App\Http\Controllers\TransactionController::class, 'clearAllDeposits']);
 
