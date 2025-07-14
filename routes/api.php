@@ -43,6 +43,22 @@ Route::get('/test-crypto-model', function () {
     }
 });
 
+// Run migrations manually (for debugging only)
+Route::get('/run-migrations', function () {
+    try {
+        $output = [];
+        $exitCode = 0;
+        exec('php artisan migrate --force 2>&1', $output, $exitCode);
+        return response()->json([
+            'message' => 'Migrations completed',
+            'output' => $output,
+            'exit_code' => $exitCode
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+});
+
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\UserController;
