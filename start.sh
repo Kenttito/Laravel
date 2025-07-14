@@ -19,6 +19,9 @@ php artisan config:clear
 php artisan cache:clear
 php artisan key:generate --force
 
+echo "Running database migrations..."
+php artisan migrate --force
+
 echo "Starting PHP server on port $PORT..."
 cd public
 php -S 0.0.0.0:$PORT 
