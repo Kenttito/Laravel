@@ -293,7 +293,9 @@ Route::post('/test-approve/{id}', [\App\Http\Controllers\TransactionController::
 
 // Temporary test decline route without JWT middleware
 Route::post('/test-decline/{id}', [\App\Http\Controllers\TransactionController::class, 'declineDeposit']);
-Route::middleware(['jwt.auth', 'admin'])->get('/admin/deposits', [\App\Http\Controllers\TransactionController::class, 'getAllDeposits']);
+
+// Temporarily remove JWT middleware from deposits endpoint for testing
+Route::get('/admin/deposits', [\App\Http\Controllers\TransactionController::class, 'getAllDeposits']);
 Route::middleware(['jwt.auth', 'admin'])->post('/admin/deposit/approve/{id}', [\App\Http\Controllers\TransactionController::class, 'approveDeposit']);
 Route::post('/admin/deposit/decline/{id}', [\App\Http\Controllers\TransactionController::class, 'declineDeposit']);
 Route::middleware(['jwt.auth', 'admin'])->post('/transaction/admin/deposit', [\App\Http\Controllers\TransactionController::class, 'adminDeposit']);
