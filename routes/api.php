@@ -18,25 +18,28 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// Health check endpoint
+// Simple health check route
 Route::get('/health', function () {
     return response()->json(['status' => 'healthy']);
 });
 
-// Database test endpoint
-Route::get('/test-db', function() {
+// Test database connection
+Route::get('/test-db', function () {
     try {
-        $userCount = \App\Models\User::count();
-        return response()->json([
-            'message' => 'Database connection works', 
-            'user_count' => $userCount,
-            'tables' => \DB::select('SHOW TABLES')
-        ]);
+        \DB::connection()->getPdo();
+        return response()->json(['message' => 'Database connected successfully']);
     } catch (\Exception $e) {
-        return response()->json([
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ], 500);
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+});
+
+// Test CryptoAddress model
+Route::get('/test-crypto-model', function () {
+    try {
+        $count = \App\Models\CryptoAddress::count();
+        return response()->json(['message' => 'CryptoAddress model works', 'count' => $count]);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
     }
 });
 
