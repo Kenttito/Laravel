@@ -19,8 +19,13 @@ php artisan config:clear
 php artisan cache:clear
 php artisan key:generate --force
 
-echo "Running database migrations..."
-php artisan migrate --force
+echo "Checking for pending migrations..."
+if php artisan migrate:status | grep -q "No migrations"; then
+    echo "No pending migrations found."
+else
+    echo "Running database migrations..."
+    php artisan migrate --force
+fi
 
 echo "Starting PHP server on port $PORT..."
 cd public
