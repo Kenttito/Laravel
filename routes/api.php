@@ -48,7 +48,7 @@ Route::get('/run-migrations', function () {
     try {
         $output = [];
         $exitCode = 0;
-        exec('php artisan migrate --force 2>&1', $output, $exitCode);
+        exec('cd /var/www && php artisan migrate --force 2>&1', $output, $exitCode);
         return response()->json([
             'message' => 'Migrations completed',
             'output' => $output,
