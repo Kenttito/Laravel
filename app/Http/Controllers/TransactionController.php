@@ -75,39 +75,47 @@ class TransactionController extends Controller
     // Admin: Approve deposit
     public function approveDeposit($id)
     {
-        $transaction = Transaction::find($id);
-        
-        if (!$transaction || $transaction->type !== 'deposit') {
-            return response()->json(['message' => 'Deposit not found'], 404);
-        }
-
-        if ($transaction->status !== 'pending') {
-            return response()->json(['message' => 'Deposit is not pending'], 400);
-        }
-
-        // Update transaction status
-        $transaction->status = 'completed';
-        $transaction->save();
-
-        // Update user's wallet balance (always USD)
-        $wallet = Wallet::where('user_id', $transaction->user_id)
-            ->where('currency', 'USD')
-            ->first();
+        try {
+            $transaction = Transaction::find($id);
             
-        if ($wallet) {
-            $wallet->balance += $transaction->amount;
-            $wallet->save();
-        } else {
-            // Create USD wallet if it doesn't exist
-            $wallet = Wallet::create([
-                'user_id' => $transaction->user_id,
-                'currency' => 'USD',
-                'type' => 'fiat',
-                'balance' => $transaction->amount,
-            ]);
-        }
+            if (!$transaction || $transaction->type !== 'deposit') {
+                return response()->json(['message' => 'Deposit not found'], 404);
+            }
 
-        return response()->json(['message' => 'Deposit approved successfully']);
+            if ($transaction->status !== 'pending') {
+                return response()->json(['message' => 'Deposit is not pending'], 400);
+            }
+
+            // Update transaction status
+            $transaction->status = 'completed';
+            $transaction->save();
+
+            // Update user's wallet balance (always USD)
+            $wallet = Wallet::where('user_id', $transaction->user_id)
+                ->where('currency', 'USD')
+                ->first();
+                
+            if ($wallet) {
+                $wallet->balance += $transaction->amount;
+                $wallet->save();
+            } else {
+                // Create USD wallet if it doesn't exist
+                $wallet = Wallet::create([
+                    'user_id' => $transaction->user_id,
+                    'currency' => 'USD',
+                    'type' => 'fiat',
+                    'balance' => $transaction->amount,
+                ]);
+            }
+
+            return response()->json(['message' => 'Deposit approved successfully']);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to approve deposit',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], 500);
+        }
     }
 
     // Admin: Decline deposit
