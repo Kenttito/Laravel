@@ -59,6 +59,19 @@ Route::get('/run-migrations', function () {
     }
 });
 
+// Check table structure
+Route::get('/check-table', function () {
+    try {
+        $columns = \DB::select("DESCRIBE crypto_addresses");
+        return response()->json([
+            'message' => 'Table structure',
+            'columns' => $columns
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+});
+
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\UserController;
