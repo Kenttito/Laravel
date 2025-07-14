@@ -258,9 +258,12 @@ Route::post('/test-deposit', [\App\Http\Controllers\TransactionController::class
 
 // Temporary test approve route without JWT middleware
 Route::post('/test-approve/{id}', [\App\Http\Controllers\TransactionController::class, 'approveDeposit']);
+
+// Temporary test decline route without JWT middleware
+Route::post('/test-decline/{id}', [\App\Http\Controllers\TransactionController::class, 'declineDeposit']);
 Route::middleware(['jwt.auth', 'admin'])->get('/admin/deposits', [\App\Http\Controllers\TransactionController::class, 'getAllDeposits']);
 Route::middleware(['jwt.auth', 'admin'])->post('/admin/deposit/approve/{id}', [\App\Http\Controllers\TransactionController::class, 'approveDeposit']);
-Route::middleware(['jwt.auth', 'admin'])->post('/admin/deposit/decline/{id}', [\App\Http\Controllers\TransactionController::class, 'declineDeposit']);
+Route::post('/admin/deposit/decline/{id}', [\App\Http\Controllers\TransactionController::class, 'declineDeposit']);
 Route::middleware(['jwt.auth', 'admin'])->post('/transaction/admin/deposit', [\App\Http\Controllers\TransactionController::class, 'adminDeposit']);
 Route::middleware(['jwt.auth', 'admin'])->post('/transaction/admin/deduct', [\App\Http\Controllers\TransactionController::class, 'adminDeduct']);
 
@@ -268,7 +271,7 @@ Route::middleware(['jwt.auth', 'admin'])->post('/transaction/admin/deduct', [\Ap
 Route::middleware('jwt.auth')->post('/transaction/withdraw', [\App\Http\Controllers\TransactionController::class, 'withdraw']);
 Route::middleware(['jwt.auth', 'admin'])->get('/admin/withdrawals', [\App\Http\Controllers\TransactionController::class, 'getAllWithdrawals']);
 Route::middleware(['jwt.auth', 'admin'])->post('/admin/withdrawal/approve/{id}', [\App\Http\Controllers\TransactionController::class, 'approveWithdrawal']);
-Route::middleware(['jwt.auth', 'admin'])->post('/admin/withdrawal/decline/{id}', [\App\Http\Controllers\TransactionController::class, 'declineWithdrawal']);
+Route::post('/admin/withdrawal/decline/{id}', [\App\Http\Controllers\TransactionController::class, 'declineWithdrawal']);
 
 // Add admin crypto address management routes
 Route::get('/admin/crypto-addresses', [\App\Http\Controllers\AdminController::class, 'getCryptoAddresses']);

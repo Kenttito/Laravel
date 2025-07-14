@@ -121,20 +121,27 @@ class TransactionController extends Controller
     // Admin: Decline deposit
     public function declineDeposit($id)
     {
-        $transaction = Transaction::find($id);
-        
-        if (!$transaction || $transaction->type !== 'deposit') {
-            return response()->json(['message' => 'Deposit not found'], 404);
+        try {
+            $transaction = Transaction::find($id);
+            
+            if (!$transaction || $transaction->type !== 'deposit') {
+                return response()->json(['message' => 'Deposit not found'], 404);
+            }
+
+            if ($transaction->status !== 'pending') {
+                return response()->json(['message' => 'Deposit is not pending'], 400);
+            }
+
+            $transaction->status = 'declined';
+            $transaction->save();
+
+            return response()->json(['message' => 'Deposit declined successfully']);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to decline deposit',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        if ($transaction->status !== 'pending') {
-            return response()->json(['message' => 'Deposit is not pending'], 400);
-        }
-
-        $transaction->status = 'declined';
-        $transaction->save();
-
-        return response()->json(['message' => 'Deposit declined successfully']);
     }
 
     // Admin: Manual deposit (admin can add funds to user account)
@@ -352,20 +359,27 @@ class TransactionController extends Controller
     // Admin: Decline withdrawal
     public function declineWithdrawal($id)
     {
-        $transaction = Transaction::find($id);
-        
-        if (!$transaction || $transaction->type !== 'withdrawal') {
-            return response()->json(['message' => 'Withdrawal not found'], 404);
+        try {
+            $transaction = Transaction::find($id);
+            
+            if (!$transaction || $transaction->type !== 'withdrawal') {
+                return response()->json(['message' => 'Withdrawal not found'], 404);
+            }
+
+            if ($transaction->status !== 'pending') {
+                return response()->json(['message' => 'Withdrawal is not pending'], 400);
+            }
+
+            $transaction->status = 'declined';
+            $transaction->save();
+
+            return response()->json(['message' => 'Withdrawal declined successfully']);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to decline withdrawal',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        if ($transaction->status !== 'pending') {
-            return response()->json(['message' => 'Withdrawal is not pending'], 400);
-        }
-
-        $transaction->status = 'declined';
-        $transaction->save();
-
-        return response()->json(['message' => 'Withdrawal declined successfully']);
     }
 
     // Admin: Clear all deposits (mark as cleared instead of deleting)
