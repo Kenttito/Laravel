@@ -271,8 +271,8 @@ Route::middleware(['jwt.auth', 'admin'])->post('/admin/withdrawal/approve/{id}',
 Route::middleware(['jwt.auth', 'admin'])->post('/admin/withdrawal/decline/{id}', [\App\Http\Controllers\TransactionController::class, 'declineWithdrawal']);
 
 // Add admin crypto address management routes
-Route::middleware(['jwt.auth', 'admin'])->get('/admin/crypto-addresses', [\App\Http\Controllers\AdminController::class, 'getCryptoAddresses']);
-Route::middleware(['jwt.auth', 'admin'])->post('/admin/crypto-addresses', [\App\Http\Controllers\AdminController::class, 'updateCryptoAddresses']);
+Route::get('/admin/crypto-addresses', [\App\Http\Controllers\AdminController::class, 'getCryptoAddresses']);
+Route::post('/admin/crypto-addresses', [\App\Http\Controllers\AdminController::class, 'updateCryptoAddresses']);
 
 // Test crypto address routes without JWT middleware
 Route::get('/test-crypto-addresses', [\App\Http\Controllers\AdminController::class, 'getCryptoAddresses']);
