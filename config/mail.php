@@ -39,7 +39,7 @@ return [
 
         'smtp' => [
             'transport' => 'smtp',
-            'scheme' => env('MAIL_SCHEME', 'tls'),
+            'scheme' => env('MAIL_SCHEME', 'smtp'),
             'url' => env('MAIL_URL'),
             'host' => env('MAIL_HOST', 'smtp.sendgrid.net'),
             'port' => env('MAIL_PORT', 587),
