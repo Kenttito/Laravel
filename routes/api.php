@@ -325,3 +325,21 @@ Route::middleware('jwt.auth')->get('/test-jwt', function () {
         'user' => auth()->user()
     ]);
 });
+
+// Permanent debug endpoint: List all registered routes
+Route::get('/debug-routes', function () {
+    $routes = collect(app('router')->getRoutes())->map(function ($route) {
+        return [
+            'uri' => $route->uri(),
+            'methods' => $route->methods(),
+            'action' => $route->getActionName(),
+            'middleware' => $route->gatherMiddleware(),
+        ];
+    });
+    return response()->json($routes);
+});
+
+// Temporary debug route to print all environment variables
+Route::get('/debug-env', function () {
+    return response()->json($_ENV);
+});
