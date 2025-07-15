@@ -44,4 +44,4 @@ if [ ! -f /var/www/artisan ]; then\n  echo "ERROR: artisan file not found in /va
 EXPOSE 8080
 
 # Start the application
-CMD ["/var/www/start.sh"] 
+CMD ["php", "-S", "0.0.0.0:8080", "-t", "public"] 
