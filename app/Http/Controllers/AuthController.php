@@ -207,18 +207,19 @@ class AuthController extends Controller
         return response()->json(['message' => 'Verification code resent. Please check your email.'], 200);
     }
 
-    // Get verification code for development/testing
+    // Permanent: Get verification code for development/testing (never returns code for admin users)
     public function getVerificationCode($email)
     {
         $user = User::where('email', $email)->first();
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
-
+        if ($user->role === 'admin') {
+            return response()->json(['message' => 'Not allowed for admin users'], 403);
+        }
         if ($user->isActive) {
             return response()->json(['message' => 'Account already verified.'], 200);
         }
-
         return response()->json([
             'email' => $user->email,
             'verificationCode' => $user->emailConfirmationCode,

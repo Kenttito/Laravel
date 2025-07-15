@@ -75,6 +75,26 @@ const EmailVerification = () => {
     }
   };
 
+  const fetchVerificationCode = async () => {
+    if (!email) {
+      setError('Please enter your email address');
+      return;
+    }
+    setError('');
+    setSuccess('');
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/auth/verification-code/${encodeURIComponent(email)}`);
+      if (response.data && response.data.verificationCode) {
+        setVerificationCode(response.data.verificationCode);
+        setSuccess('Verification code auto-filled (dev only)');
+      } else {
+        setError('Could not fetch verification code.');
+      }
+    } catch (err) {
+      setError('Failed to fetch verification code.');
+    }
+  };
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -206,6 +226,19 @@ const EmailVerification = () => {
                 </button>
               </div>
             </form>
+
+            {process.env.NODE_ENV === 'development' && (
+              <div className="text-center mt-2">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={fetchVerificationCode}
+                  style={{ backgroundColor: '#444', color: '#fff', borderRadius: '8px', padding: '8px 16px', fontSize: '0.9rem' }}
+                >
+                  Auto-Fill Verification Code (Dev Only)
+                </button>
+              </div>
+            )}
 
             <hr style={{ borderColor: 'rgba(212, 175, 55, 0.3)', margin: '30px 0' }} />
 
