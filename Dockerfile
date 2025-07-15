@@ -38,7 +38,7 @@ RUN echo '#!/bin/bash\n\
 echo "Current directory: \\$(pwd)"\n\
 echo "Listing /var/www:"\nls -l /var/www\n\
 echo "Listing /var/www/public:"\nls -l /var/www/public\n\
-if [ ! -f /var/www/artisan ]; then\n  echo "ERROR: artisan file not found in /var/www!"\n  exit 1\nfi\n\ncd /var/www\nphp artisan config:clear\nphp artisan cache:clear\nphp artisan key:generate --force\nphp artisan migrate --force\n# DO NOT run php artisan route:cache\ncd /var/www/public\nphp -S 0.0.0.0:$PORT\n' > /var/www/start.sh && chmod +x /var/www/start.sh
+if [ ! -f /var/www/artisan ]; then\n  echo "ERROR: artisan file not found in /var/www!"\n  exit 1\nfi\n\ncd /var/www\nrm -f bootstrap/cache/routes.php\nphp artisan config:clear\nphp artisan cache:clear\nphp artisan key:generate --force\nphp artisan migrate --force\n# DO NOT run php artisan route:cache\ncd /var/www/public\nphp -S 0.0.0.0:$PORT\n' > /var/www/start.sh && chmod +x /var/www/start.sh
 
 # Expose port
 EXPOSE 8080
