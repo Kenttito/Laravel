@@ -169,6 +169,11 @@ class TransactionController extends Controller
                 $description = "Admin profit addition of {$request->amount} {$request->currency}";
             }
 
+            // If statType is invested, you may want to customize the description (optional)
+            if ($request->statType === 'invested') {
+                $description = "Admin invested addition of {$request->amount} {$request->currency}";
+            }
+
             // Create transaction
             $transaction = Transaction::create([
                 'user_id' => $request->userId,
@@ -182,11 +187,10 @@ class TransactionController extends Controller
                 ],
             ]);
 
-            // Update user's wallet balance (always USD)
+            // Always add to user's wallet balance (total balance) for all statTypes
             $wallet = Wallet::where('user_id', $request->userId)
                 ->where('currency', 'USD')
                 ->first();
-                
             if ($wallet) {
                 $wallet->balance += $request->amount;
                 $wallet->save();
@@ -200,7 +204,7 @@ class TransactionController extends Controller
                 ]);
             }
 
-            $message = $request->statType === 'earnings' ? 'Profit added successfully' : 'Deposit added successfully';
+            $message = $request->statType === 'earnings' ? 'Profit added successfully' : ($request->statType === 'invested' ? 'Invested amount added successfully' : 'Deposit added successfully');
 
             return response()->json([
                 'message' => $message,
@@ -220,52 +224,62 @@ class TransactionController extends Controller
     // Admin: Manual deduction (admin can deduct funds from user account)
     public function adminDeduct(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'userId' => 'required|exists:users,id',
-            'amount' => 'required|numeric|min:0.01',
-            'currency' => 'required|string',
-            'type' => 'required|string|in:fiat,crypto',
-            'statType' => 'required|string|in:balance,invested,earnings',
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'userId' => 'required|exists:users,id',
+                'amount' => 'required|numeric|min:0.01',
+                'currency' => 'required|string',
+                'type' => 'required|string|in:fiat,crypto',
+                'statType' => 'required|string|in:balance,invested,earnings',
+            ]);
 
-        if ($validator->fails()) {
-            return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 400);
-        }
+            if ($validator->fails()) {
+                return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 400);
+            }
 
-        // Check if user has sufficient balance
-        $wallet = Wallet::where('user_id', $request->userId)
-            ->where('currency', 'USD')
-            ->first();
+            // Check if user has sufficient balance
+            $wallet = Wallet::where('user_id', $request->userId)
+                ->where('currency', 'USD')
+                ->first();
             
-        if (!$wallet || $wallet->balance < $request->amount) {
-            return response()->json(['message' => 'Insufficient balance'], 400);
+            if (!$wallet || $wallet->balance < $request->amount) {
+                return response()->json(['message' => 'Insufficient balance'], 400);
+            }
+
+            // Always record as 'loss' transaction
+            $transactionType = 'loss';
+            $description = "Admin loss deduction of {$request->amount} {$request->currency}";
+
+            // Create transaction
+            $transaction = Transaction::create([
+                'user_id' => $request->userId,
+                'type' => $transactionType,
+                'amount' => $request->amount,
+                'status' => 'completed', // Auto-approve admin deductions
+                'details' => [
+                    'currency' => $request->currency,
+                    'type' => $request->type,
+                    'description' => $description,
+                ],
+            ]);
+
+            // Deduct from user's wallet balance
+            $wallet->balance -= $request->amount;
+            $wallet->save();
+
+            return response()->json([
+                'message' => 'Loss deduction completed successfully',
+                'transaction' => $transaction
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Admin deduct error: ' . $e->getMessage());
+            \Log::error('Admin deduct error trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'message' => 'Admin deduct failed. Please check the server logs for details.',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], 500);
         }
-
-        // Always record as 'loss' transaction
-        $transactionType = 'loss';
-        $description = "Admin loss deduction of {$request->amount} {$request->currency}";
-
-        // Create transaction
-        $transaction = Transaction::create([
-            'user_id' => $request->userId,
-            'type' => $transactionType,
-            'amount' => $request->amount,
-            'status' => 'completed', // Auto-approve admin deductions
-            'details' => [
-                'currency' => $request->currency,
-                'type' => $request->type,
-                'description' => $description,
-            ],
-        ]);
-
-        // Deduct from user's wallet balance
-        $wallet->balance -= $request->amount;
-        $wallet->save();
-
-        return response()->json([
-            'message' => 'Loss deduction completed successfully',
-            'transaction' => $transaction
-        ]);
     }
 
     // User withdrawal request
