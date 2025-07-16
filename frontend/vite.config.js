@@ -15,7 +15,7 @@ export default defineConfig({
             },
         },
     ],
-    base: '/kings-invest-frontend/',
+    base: '/',
     build: {
         outDir: 'build',
         rollupOptions: {
