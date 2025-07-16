@@ -812,7 +812,7 @@ const AdminDashboard = () => {
                           {dep.status === 'declined' && <span className="badge bg-danger">Declined</span>}
                           {dep.status === 'completed' && <span className="badge bg-info">Completed</span>}
                         </td>
-                        <td>{formatDateTime(dep.createdAt || dep.created_at)}</td>
+                        <td>{formatDateTime(dep.created_at)}</td>
                         <td>
                           {dep.status === 'pending' && (
                             <>
@@ -874,7 +874,7 @@ const AdminDashboard = () => {
                         <td>{formatAmount(withdrawal.amount)}</td>
                         <td>{withdrawal.details?.currency}</td>
                         <td>{withdrawal.details?.type}</td>
-                        <td>{formatDateTime(withdrawal.createdAt || withdrawal.created_at)}</td>
+                        <td>{formatDateTime(withdrawal.created_at)}</td>
                         <td>
                                                   <button className="btn btn-success btn-sm me-2" onClick={() => handleApproveWithdrawal(withdrawal.id)} disabled={actionLoading}>Approve</button>
                         <button className="btn btn-danger btn-sm" onClick={() => handleDeclineWithdrawal(withdrawal.id)} disabled={actionLoading}>Decline</button>

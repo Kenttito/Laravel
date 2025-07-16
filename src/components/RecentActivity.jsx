@@ -356,8 +356,8 @@ const RecentActivity = ({ activity: propActivity, isStandalone = true }) => {
                     <tr key={idx} style={{ borderBottom: idx === displayActivity.length - 1 ? 'none' : '1px solid #dee2e6' }}>
                       <td>
                         <div className="d-flex align-items-center">
-                          <i className={`fas ${tx.type === 'Deposit' ? 'fa-arrow-up text-success' : 'fa-arrow-down text-danger'} me-2`}></i>
-                          <strong>{tx.type}</strong>
+                          <i className={`fas ${tx.type === 'deposit' || tx.type === 'profit' ? 'fa-arrow-up text-success' : 'fa-arrow-down text-danger'} me-2`}></i>
+                          <strong>{tx.type === 'profit' ? 'Profit' : tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}</strong>
                         </div>
                       </td>
                       <td>
