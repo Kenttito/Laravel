@@ -19,6 +19,22 @@ const formatAmount = (amount) => {
   return num.toLocaleString(undefined, { maximumFractionDigits: 8 });
 };
 
+// Utility to format date and time for admin dashboard
+const formatDateTime = (date) => {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d)) return date;
+  return d.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  });
+};
+
 const AdminDashboard = () => {
   console.log('AdminDashboard component rendering');
   const [users, setUsers] = useState([]);
@@ -796,7 +812,7 @@ const AdminDashboard = () => {
                           {dep.status === 'declined' && <span className="badge bg-danger">Declined</span>}
                           {dep.status === 'completed' && <span className="badge bg-info">Completed</span>}
                         </td>
-                        <td>{new Date(dep.createdAt).toLocaleString()}</td>
+                        <td>{formatDateTime(dep.createdAt || dep.created_at)}</td>
                         <td>
                           {dep.status === 'pending' && (
                             <>
@@ -858,7 +874,7 @@ const AdminDashboard = () => {
                         <td>{formatAmount(withdrawal.amount)}</td>
                         <td>{withdrawal.details?.currency}</td>
                         <td>{withdrawal.details?.type}</td>
-                        <td>{new Date(withdrawal.createdAt).toLocaleString()}</td>
+                        <td>{formatDateTime(withdrawal.createdAt || withdrawal.created_at)}</td>
                         <td>
                                                   <button className="btn btn-success btn-sm me-2" onClick={() => handleApproveWithdrawal(withdrawal.id)} disabled={actionLoading}>Approve</button>
                         <button className="btn btn-danger btn-sm" onClick={() => handleDeclineWithdrawal(withdrawal.id)} disabled={actionLoading}>Decline</button>

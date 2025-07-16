@@ -147,64 +147,74 @@ class TransactionController extends Controller
     // Admin: Manual deposit (admin can add funds to user account)
     public function adminDeposit(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'userId' => 'required|exists:users,id',
-            'amount' => 'required|numeric|min:0.01',
-            'currency' => 'required|string',
-            'type' => 'required|string|in:fiat,crypto',
-            'statType' => 'required|string|in:balance,invested,earnings',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 400);
-        }
-
-        $transactionType = 'deposit';
-        $description = "Admin deposit of {$request->amount} {$request->currency}";
-
-        // If statType is earnings, create a profit transaction instead of deposit
-        if ($request->statType === 'earnings') {
-            $transactionType = 'profit';
-            $description = "Admin profit addition of {$request->amount} {$request->currency}";
-        }
-
-        // Create transaction
-        $transaction = Transaction::create([
-            'user_id' => $request->userId,
-            'type' => $transactionType,
-            'amount' => $request->amount,
-            'status' => 'completed', // Auto-approve admin transactions
-            'details' => [
-                'currency' => $request->currency,
-                'type' => $request->type,
-                'description' => $description,
-            ],
-        ]);
-
-        // Update user's wallet balance (always USD)
-        $wallet = Wallet::where('user_id', $request->userId)
-            ->where('currency', 'USD')
-            ->first();
-            
-        if ($wallet) {
-            $wallet->balance += $request->amount;
-            $wallet->save();
-        } else {
-            // Create USD wallet if it doesn't exist
-            $wallet = Wallet::create([
-                'user_id' => $request->userId,
-                'currency' => 'USD',
-                'type' => 'fiat',
-                'balance' => $request->amount,
+        try {
+            $validator = Validator::make($request->all(), [
+                'userId' => 'required|exists:users,id',
+                'amount' => 'required|numeric|min:0.01',
+                'currency' => 'required|string',
+                'type' => 'required|string|in:fiat,crypto',
+                'statType' => 'required|string|in:balance,invested,earnings',
             ]);
+
+            if ($validator->fails()) {
+                return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 400);
+            }
+
+            $transactionType = 'deposit';
+            $description = "Admin deposit of {$request->amount} {$request->currency}";
+
+            // If statType is earnings, create a profit transaction instead of deposit
+            if ($request->statType === 'earnings') {
+                $transactionType = 'profit';
+                $description = "Admin profit addition of {$request->amount} {$request->currency}";
+            }
+
+            // Create transaction
+            $transaction = Transaction::create([
+                'user_id' => $request->userId,
+                'type' => $transactionType,
+                'amount' => $request->amount,
+                'status' => 'completed', // Auto-approve admin transactions
+                'details' => [
+                    'currency' => $request->currency,
+                    'type' => $request->type,
+                    'description' => $description,
+                ],
+            ]);
+
+            // Update user's wallet balance (always USD)
+            $wallet = Wallet::where('user_id', $request->userId)
+                ->where('currency', 'USD')
+                ->first();
+                
+            if ($wallet) {
+                $wallet->balance += $request->amount;
+                $wallet->save();
+            } else {
+                // Create USD wallet if it doesn't exist
+                $wallet = Wallet::create([
+                    'user_id' => $request->userId,
+                    'currency' => 'USD',
+                    'type' => 'fiat',
+                    'balance' => $request->amount,
+                ]);
+            }
+
+            $message = $request->statType === 'earnings' ? 'Profit added successfully' : 'Deposit added successfully';
+
+            return response()->json([
+                'message' => $message,
+                'transaction' => $transaction
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Admin deposit error: ' . $e->getMessage());
+            \Log::error('Admin deposit error trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'message' => 'Admin deposit failed. Please check the server logs for details.',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], 500);
         }
-
-        $message = $request->statType === 'earnings' ? 'Profit added successfully' : 'Deposit added successfully';
-
-        return response()->json([
-            'message' => $message,
-            'transaction' => $transaction
-        ]);
     }
 
     // Admin: Manual deduction (admin can deduct funds from user account)
@@ -231,14 +241,9 @@ class TransactionController extends Controller
             return response()->json(['message' => 'Insufficient balance'], 400);
         }
 
-        $transactionType = 'withdrawal';
-        $description = "Admin deduction of {$request->amount} {$request->currency}";
-
-        // If statType is earnings, create a loss transaction instead of withdrawal
-        if ($request->statType === 'earnings') {
-            $transactionType = 'loss';
-            $description = "Admin loss deduction of {$request->amount} {$request->currency}";
-        }
+        // Always record as 'loss' transaction
+        $transactionType = 'loss';
+        $description = "Admin loss deduction of {$request->amount} {$request->currency}";
 
         // Create transaction
         $transaction = Transaction::create([
@@ -257,10 +262,8 @@ class TransactionController extends Controller
         $wallet->balance -= $request->amount;
         $wallet->save();
 
-        $message = $request->statType === 'earnings' ? 'Loss deduction completed successfully' : 'Deduction completed successfully';
-
         return response()->json([
-            'message' => $message,
+            'message' => 'Loss deduction completed successfully',
             'transaction' => $transaction
         ]);
     }
